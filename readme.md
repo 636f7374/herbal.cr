@@ -32,7 +32,7 @@
   * TCPConnection
   * TCPBinding
   * AssociateUDP
-* It is a full-featured SOCKS5 Client / Server
+* It is a full-featured SOCKS5 Client / Server.
   * SimpleAuth (Does not support GSSAPI)
   * Local DNS resolution / Remote DNS resolution
   * TCPConnection / TCPBinding / AssociateUDP
@@ -42,7 +42,7 @@
 ## Tips
 
 * Does not support [Generic Security Services Application Program Interface](https://en.wikipedia.org/wiki/Generic_Security_Services_Application_Program_Interface) authentication.
-* Does not support SOCKS4 and SOCKS4A Protocols
+* Does not support SOCKS4 and SOCKS4A Protocols.
 * Why is its name `Tomato.cr`, it's just random six-word English words.
 
 ## Usage
