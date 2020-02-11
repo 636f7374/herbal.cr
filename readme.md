@@ -1,7 +1,7 @@
 <div align = "center"><img src="images/icon.png" width="256" height="256" /></div>
 
 <div align = "center">
-  <h1>Tomato.cr - SOCKS5 Proxy</h1>
+  <h1>Tomato.cr - SOCKS5 Client with Server</h1>
 </div>
 
 <p align="center">
@@ -122,6 +122,10 @@ loop do
     end
   end
 end
+```
+
+```crystal
+STDIN.puts context.summary # => [V5, [NoAuthentication, UserNamePassword], TCPConnection, Domain, Socket::IPAddress(203.208.41.68:443), #<Tomato::Domain:0x10ca12900 @domain="safebrowsing.googleapis.com", @port=443>]
 ```
 
 ### Used as Shard

@@ -61,6 +61,9 @@ module Tomato
   class AuthenticationFailed < Exception
   end
 
+  class ConnectionDenied < Exception
+  end
+
   class SimpleAuth
     property userName : String
     property password : String

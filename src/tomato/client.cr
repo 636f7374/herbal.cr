@@ -201,7 +201,7 @@ module Tomato
       raise MismatchFlag.new if _get_version != _version
 
       raise MalformedPacket.new unless _get_status = Tomato.get_status socket
-      raise _get_status unless _get_status.indicates_success?
+      raise ConnectionDenied.new unless _get_status.indicates_success?
       raise MalformedPacket.new unless reserved = Tomato.get_reserved socket
 
       raise MalformedPacket.new unless address_type = Tomato.get_address socket
