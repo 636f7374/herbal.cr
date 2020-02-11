@@ -17,15 +17,14 @@
 
 ## Description
 
-* I saw the design of `wontruefree/socks` and `kostya/socks`, But it is not ideal / meets the requirements.
+* I saw the design of `wontruefree` and `kostya`, But it is not ideal / meets the requirements.
   * [wontruefree / socks](https://github.com/wontruefree/socks)
   * [kostya / socks](https://github.com/kostya/socks)
 * After a day of conception / thinking, a day of design / debugging, `Tomato.cr` has been initially completed.
   * I refer to [RFC1928](https://tools.ietf.org/html/rfc1928) and some guidelines for design, actually SOCKS5 is not difficult.
   * Third-party guides are more effective and practical, and has been verified by Wireshark test.
 * Due to time constraints, Travis-CI and Spec tests have not been added for the time being.
-* In addition, while designing, I drew [RFC1928](https://tools.ietf.org/html/rfc1928) as a drawing, That's why I did it quickly.
-  * Drawings I put in the root directory of the repository.
+* In addition, while designing, I drew [RFC1928](https://tools.ietf.org/html/rfc1928) as a drawing, That's why I did it quickly, (I put in the root directory).
 
 ## Features
 
@@ -148,11 +147,11 @@ $ make test
 
 ## References
 
-[Official | Wikipedia - SOCKS](https://en.wikipedia.org/wiki/SOCKS)
-[Official | RFC 1928 - SOCKS Protocol Version 5 - IETF Tools](https://tools.ietf.org/html/rfc1928)
-[Document | How Socks 5 Works](https://samsclass.info/122/proj/how-socks5-works.html)
-[Document | SOCKS 5  - A Proxy Protocol](https://dev.to/nimit95/socks-5-a-proxy-protocol-5hcd)
-[Document | Implement SOCKS5 Protocol](https://developpaper.com/using-nodejs-to-implement-socks5-protocol/)
+* [Official | Wikipedia - SOCKS](https://en.wikipedia.org/wiki/SOCKS)
+* [Official | RFC 1928 - SOCKS Protocol Version 5 - IETF Tools](https://tools.ietf.org/html/rfc1928)
+* [Document | How Socks 5 Works](https://samsclass.info/122/proj/how-socks5-works.html)
+* [Document | SOCKS 5  - A Proxy Protocol](https://dev.to/nimit95/socks-5-a-proxy-protocol-5hcd)
+* [Document | Implement SOCKS5 Protocol](https://developpaper.com/using-nodejs-to-implement-socks5-protocol/)
 
 
 ## Credit
