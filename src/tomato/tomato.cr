@@ -265,10 +265,10 @@ module Tomato
 
   {% for name in ["username", "password"] %}
   def self.get_{{name.id}}(io : IO) : String?
-  	buffer = uninitialized UInt8[1_i32]
-  	length = io.read buffer.to_slice rescue nil
+    buffer = uninitialized UInt8[1_i32]
+    length = io.read buffer.to_slice rescue nil
 
-  	return unless _length = length
+    return unless _length = length
     return if _length.zero?
 
     {{name.id}}_length = buffer.to_slice[0_i32]
