@@ -21,7 +21,7 @@
   * [wontruefree / socks](https://github.com/wontruefree/socks)
   * [kostya / socks](https://github.com/kostya/socks)
 * After a day of conception / thinking, a day of design / debugging, `Tomato.cr` has been initially completed.
-  * I refer to [RFC1928](https://tools.ietf.org/html/rfc1928) and some guidelines for design, actually SOCKS5 is not difficult.
+  * I reference to [RFC1928](https://tools.ietf.org/html/rfc1928) and some guidelines for design, actually SOCKS5 is not difficult.
   * Third-party guides are more effective and practical, and has been verified by Wireshark test.
 * Due to time constraints, Travis-CI and Spec tests have not been added for the time being.
 * While designing, I drew [RFC1928](https://tools.ietf.org/html/rfc1928) as a drawing, That's why I did it quickly, (I put in the root directory).
@@ -43,7 +43,7 @@
 
 * Does not support [Generic Security Services Application Program Interface](https://en.wikipedia.org/wiki/Generic_Security_Services_Application_Program_Interface) authentication.
 * Does not support SOCKS4 and SOCKS4A Protocols.
-* Why is its name `Tomato.cr`, it's just random six-word English words.
+* Why is it named `Tomato.cr`? it's just random six-word English words.
 
 ## Usage
 
