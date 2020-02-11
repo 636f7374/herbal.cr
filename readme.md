@@ -124,8 +124,8 @@ loop do
 end
 ```
 
-```text
-[V5, [NoAuthentication, UserNamePassword], TCPConnection, Domain, Socket::IPAddress(203.208.41.68:443), #<Tomato::Domain:0x10ca12900 @domain="safebrowsing.googleapis.com", @port=443>]
+```crystal
+STDIN.puts context.summary # => [V5, [NoAuthentication, UserNamePassword], TCPConnection, Domain, Socket::IPAddress(203.208.41.68:443), #<Tomato::Domain:0x10ca12900 @domain="safebrowsing.googleapis.com", @port=443>]
 ```
 
 ### Used as Shard
