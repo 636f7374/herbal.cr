@@ -1,0 +1,11 @@
+name: tomato
+version: 0.1.0
+
+dependencies:
+  durian:
+    github: 636f7374/durian.cr
+
+authors:
+  - 636f7374
+
+license: MIT
