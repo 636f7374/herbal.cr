@@ -46,6 +46,11 @@ module Tomato
     end
 
     def process!(socket : Socket, without_establish : Bool = false) : Context
+      # Attach
+      simple_auth.try { |_simple_auth| socket.simple_auth = _simple_auth }
+      authentication.try { |_authentication| socket.authentication = _authentication }
+      dns_resolver.try { |_resolver| socket.dns_resolver = _resolver }
+
       # TimeOut
       client_timeout.try do |_timeout|
         socket.read_timeout = _timeout.read
@@ -56,11 +61,6 @@ module Tomato
       context = Context.new socket
       dns_resolver.try { |_resolver| context.dns_resolver = _resolver }
       remote_timeout.try { |_timeout| context.timeout = _timeout }
-
-      # Attach
-      simple_auth.try { |_simple_auth| socket.simple_auth = _simple_auth }
-      authentication.try { |_authentication| socket.authentication = _authentication }
-      dns_resolver.try { |_resolver| socket.dns_resolver = _resolver }
 
       # HandShake
       if socket.handshake.deny?

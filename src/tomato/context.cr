@@ -63,8 +63,8 @@ module Tomato
     end
 
     def all_close
-      client.try &.close
-      server.try &.close
+      client.close
+      server.close
     end
 
     def transport
@@ -96,8 +96,8 @@ module Tomato
       begin
         connect_server!
       rescue ex
-        server.try &.close
-        client.try &.close
+        server.close
+        client.close
 
         return
       end

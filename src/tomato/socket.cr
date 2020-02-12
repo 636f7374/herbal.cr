@@ -1,8 +1,8 @@
 module Tomato
   class Socket < IO
-    property wrapped : ::Socket
+    property wrapped : IO
 
-    def initialize(@wrapped : ::Socket)
+    def initialize(@wrapped : IO)
     end
 
     def version=(value : Version)
@@ -77,20 +77,32 @@ module Tomato
       @dnsResolver
     end
 
+    def buffer_close
+      _wrapped = wrapped
+
+      _wrapped.buffer_close if _wrapped.responds_to? :buffer_close
+    end
+
     def read_timeout=(value : Int | Float | Time::Span)
-      wrapped.read_timeout = value
+      _wrapped = wrapped
+
+      _wrapped.read_timeout = value if _wrapped.responds_to? :read_timeout=
     end
 
     def write_timeout=(value : Int | Float | Time::Span)
-      wrapped.write_timeout = value
+      _wrapped = wrapped
+
+      _wrapped.write_timeout = value if _wrapped.responds_to? :write_timeout=
     end
 
     def read_timeout
-      wrapped.read_timeout
+      _wrapped = wrapped
+      _wrapped.read_timeout if _wrapped.responds_to? :read_timeout
     end
 
     def write_timeout
-      wrapped.write_timeout
+      _wrapped = wrapped
+      _wrapped.write_timeout if _wrapped.responds_to? :write_timeout
     end
 
     def read(slice : Bytes) : Int32
