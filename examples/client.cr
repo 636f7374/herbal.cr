@@ -23,5 +23,6 @@ begin
   puts String.new buffer.to_slice[0_i32, length]
 rescue ex
   puts [ex]
-  client.close
 end
+
+client.close

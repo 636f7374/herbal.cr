@@ -61,7 +61,7 @@ resolver.ip_cache = Durian::Resolver::Cache::IPAddress.new
 
 # Tomato
 client = Tomato::Client.new resolver
-client.create_socket "0.0.0.0", 1234_i32
+client.create_remote "0.0.0.0", 1234_i32
 
 begin
   client.connect! "www.example.com", 80_i32, Tomato::Command::TCPConnection, true
@@ -99,11 +99,11 @@ resolver = Durian::Resolver.new servers
 resolver.ip_cache = Durian::Resolver::Cache::IPAddress.new
 
 # Tomato
-server = Tomato::Server.new "0.0.0.0", 1234_i32
-server.authentication = Tomato::Authentication::NoAuthentication
-server.dns_resolver = resolver
-server.client_timeout = Tomato::TimeOut.new
-server.remote_timeout = Tomato::TimeOut.new
+tomato = Tomato::Server.new TCPServer.new "0.0.0.0", 1234_i32
+tomato.authentication = Tomato::Authentication::NoAuthentication
+tomato.dns_resolver = resolver
+tomato.client_timeout = Tomato::TimeOut.new
+tomato.remote_timeout = Tomato::TimeOut.new
 
 # Authentication (Optional)
 # server.authentication = Tomato::Authentication::UserNamePassword
@@ -113,10 +113,10 @@ server.remote_timeout = Tomato::TimeOut.new
 # end
 
 loop do
-  while socket = server.accept?
+  while socket = tomato.accept?
     spawn do
       next unless client = socket
-      next unless context = server.process client
+      next unless context = tomato.process client
 
       handle_client context
     end
