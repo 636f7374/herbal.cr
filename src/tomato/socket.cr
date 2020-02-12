@@ -105,6 +105,10 @@ module Tomato
       wrapped << value
     end
 
+    def flush
+      wrapped.flush
+    end
+
     def close
       wrapped.try &.close
     end
