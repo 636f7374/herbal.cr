@@ -36,6 +36,7 @@
   * SimpleAuth (Does not support GSSAPI)
   * Local DNS resolution / Remote DNS resolution
   * TCPConnection / TCPBinding / AssociateUDP
+  * Reject Establish (Server)
 * Loosely coupled, Low footprint, High performance.
 * ...
 
