@@ -2,10 +2,9 @@ module Tomato
   class Client < IO
     getter dnsResolver : Durian::Resolver
     getter timeout : TimeOut
-    property socket : IO
+    property wrapped : IO
 
-    def initialize(@dnsResolver : Durian::Resolver, @timeout : TimeOut = TimeOut.new)
-      @socket = Tomato.empty_io
+    def initialize(@dnsResolver : Durian::Resolver, @wrapped : IO = Tomato.empty_io, @timeout : TimeOut = TimeOut.new)
     end
 
     def simple_auth=(value : SimpleAuth)
@@ -33,35 +32,35 @@ module Tomato
     end
 
     def read(slice : Bytes) : Int32
-      socket.read slice
+      wrapped.read slice
     end
 
     def write(slice : Bytes) : Nil
-      socket.write slice
+      wrapped.write slice
     end
 
     def <<(value : String) : IO
-      socket << value
+      wrapped << value
     end
 
     def close
-      socket.try &.close
+      wrapped.try &.close
     end
 
     def closed?
-      socket.closed?
+      wrapped.closed?
     end
 
-    def create_socket(host : String, port : Int32) : Durian::TCPSocket?
-      create_socket! host, port rescue nil
+    def create_remote(host : String, port : Int32) : Durian::TCPSocket?
+      create_remote! host, port rescue nil
     end
 
-    def create_socket(ip_address : Socket::IPAddress) : Durian::TCPSocket?
-      create_socket! ip_address rescue nil
+    def create_remote(ip_address : Socket::IPAddress) : Durian::TCPSocket?
+      create_remote! ip_address rescue nil
     end
 
-    def create_socket!(host : String, port : Int32) : Durian::TCPSocket?
-      return unless socket.is_a? IO::Memory if socket
+    def create_remote!(host : String, port : Int32) : Durian::TCPSocket?
+      return unless wrapped.is_a? IO::Memory if wrapped
 
       method, ip_address = Durian::Resolver.getaddrinfo! host, port, dnsResolver
 
@@ -69,23 +68,23 @@ module Tomato
       _socket.read_timeout = timeout.read
       _socket.write_timeout = timeout.write
 
-      @socket = _socket
+      @wrapped = _socket
       _socket
     end
 
-    def create_socket!(ip_address : Socket::IPAddress) : TCPSocket?
-      return unless socket.is_a? IO::Memory if socket
+    def create_remote!(ip_address : Socket::IPAddress) : TCPSocket?
+      return unless wrapped.is_a? IO::Memory if wrapped
 
       _socket = TCPSocket.new ip_address, timeout.connect
       _socket.read_timeout = timeout.read
       _socket.write_timeout = timeout.write
 
-      @socket = _socket
+      @wrapped = _socket
       _socket
     end
 
     def connect!(host : String, port : Int32, command : Command, remote_resolution : Bool = false)
-      connect! socket, host, port, command, remote_resolution
+      connect! wrapped, host, port, command, remote_resolution
     end
 
     def connect!(socket : IO, host : String, port : Int32, command : Command, remote_resolution : Bool = false)

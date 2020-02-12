@@ -1,5 +1,10 @@
 module Tomato
-  class Socket < TCPSocket
+  class Socket < IO
+    property wrapped : ::Socket
+
+    def initialize(@wrapped : ::Socket)
+    end
+
     def version=(value : Version)
       @version = value
     end
@@ -48,7 +53,7 @@ module Tomato
       @addressType
     end
 
-    def remote_ip_address=(value : Socket::IPAddress)
+    def remote_ip_address=(value : ::Socket::IPAddress)
       @remoteIpAddress = value
     end
 
@@ -70,6 +75,42 @@ module Tomato
 
     def dns_resolver
       @dnsResolver
+    end
+
+    def read_timeout=(value : Int | Float | Time::Span)
+      wrapped.read_timeout = value
+    end
+
+    def write_timeout=(value : Int | Float | Time::Span)
+      wrapped.write_timeout = value
+    end
+
+    def read_timeout
+      wrapped.read_timeout
+    end
+
+    def write_timeout
+      wrapped.write_timeout
+    end
+
+    def read(slice : Bytes) : Int32
+      wrapped.read slice
+    end
+
+    def write(slice : Bytes) : Nil
+      wrapped.write slice
+    end
+
+    def <<(value : String) : IO
+      wrapped << value
+    end
+
+    def close
+      wrapped.try &.close
+    end
+
+    def closed?
+      wrapped.closed?
     end
 
     def auth : Verify

@@ -97,7 +97,7 @@ module Tomato
   end
 
   def self.to_ip_address(host : String, port : Int32)
-    Socket::IPAddress.new host, port rescue nil
+    ::Socket::IPAddress.new host, port rescue nil
   end
 
   def self.get_optional(io : IO) : Int32?
@@ -114,13 +114,13 @@ module Tomato
     optional.to_i32
   end
 
-  def self.to_address_type(ip_address : Socket::IPAddress)
+  def self.to_address_type(ip_address : ::Socket::IPAddress)
     return Address::Ipv6 if ip_address.family.inet6?
 
     Address::Ipv4
   end
 
-  def self.ipv4_address_to_bytes(ip_address : Socket::IPAddress) : Bytes
+  def self.ipv4_address_to_bytes(ip_address : ::Socket::IPAddress) : Bytes
     buffer = IO::Memory.new 4_i32
 
     split = ip_address.address.split "."
@@ -129,7 +129,7 @@ module Tomato
     buffer.to_slice
   end
 
-  def self.ipv6_address_to_bytes(ip_address : Socket::IPAddress) : Bytes
+  def self.ipv6_address_to_bytes(ip_address : ::Socket::IPAddress) : Bytes
     buffer = IO::Memory.new 16_i32
     address = ip_address.address.split ":"
 
@@ -227,7 +227,7 @@ module Tomato
     Domain.new domain, port.to_i32
   end
 
-  def self.extract_ip_address(address_type : Address, io : IO) : Socket::IPAddress?
+  def self.extract_ip_address(address_type : Address, io : IO) : ::Socket::IPAddress?
     case address_type
     when .ipv6?
       return unless ip_address = Tomato.decode_ipv6_address io
@@ -235,7 +235,7 @@ module Tomato
       port = io.read_bytes UInt16, IO::ByteFormat::BigEndian rescue nil
       return unless _port = port
 
-      Socket::IPAddress.new ip_address, _port.to_i32 rescue nil
+      ::Socket::IPAddress.new ip_address, _port.to_i32 rescue nil
     when .ipv4?
       ipv4_buffer = uninitialized UInt8[4_i32]
       length = io.read ipv4_buffer.to_slice rescue nil
@@ -247,7 +247,7 @@ module Tomato
       port = io.read_bytes UInt16, IO::ByteFormat::BigEndian rescue nil
       return unless _port = port
 
-      Socket::IPAddress.new ip_address, _port.to_i32 rescue nil
+      ::Socket::IPAddress.new ip_address, _port.to_i32 rescue nil
     end
   end
 

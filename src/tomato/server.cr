@@ -1,5 +1,10 @@
 module Tomato
-  class Server < TCPServer
+  class Server
+    property wrapped : TCPServer | UNIXServer
+
+    def initialize(@wrapped : TCPServer | UNIXServer)
+    end
+
     def authentication=(value : Authentication)
       @authentication = value
     end
@@ -85,12 +90,9 @@ module Tomato
     end
 
     def accept? : Socket?
-      return unless client_fd = accept_impl
+      return unless socket = wrapped.accept?
 
-      socket = Socket.new fd: client_fd, family: family, type: type, protocol: protocol
-      socket.sync = sync?
-
-      socket
+      Socket.new socket
     end
   end
 end

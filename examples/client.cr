@@ -9,7 +9,7 @@ resolver.ip_cache = Durian::Resolver::Cache::IPAddress.new
 
 # Tomato
 client = Tomato::Client.new resolver
-client.create_socket "0.0.0.0", 1234_i32
+client.create_remote "0.0.0.0", 1234_i32
 
 begin
   client.connect! "www.example.com", 80_i32, Tomato::Command::TCPConnection, true
