@@ -59,7 +59,7 @@ module Tomato
       create_remote! host, port rescue nil
     end
 
-    def create_remote(ip_address : Socket::IPAddress) : Durian::TCPSocket?
+    def create_remote(ip_address : ::Socket::IPAddress) : Durian::TCPSocket?
       create_remote! ip_address rescue nil
     end
 
@@ -76,7 +76,7 @@ module Tomato
       _socket
     end
 
-    def create_remote!(ip_address : Socket::IPAddress) : TCPSocket?
+    def create_remote!(ip_address : ::Socket::IPAddress) : TCPSocket?
       return unless wrapped.is_a? IO::Memory if wrapped
 
       _socket = TCPSocket.new ip_address, timeout.connect
