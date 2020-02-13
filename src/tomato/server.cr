@@ -1,8 +1,9 @@
 module Tomato
   class Server
-    property wrapped : TCPServer | UNIXServer
+    getter wrapped : TCPServer | UNIXServer
+    getter dnsResolver : Durian::Resolver
 
-    def initialize(@wrapped : TCPServer | UNIXServer)
+    def initialize(@wrapped : TCPServer | UNIXServer, @dnsResolver : Durian::Resolver)
     end
 
     def authentication=(value : Authentication)
@@ -19,14 +20,6 @@ module Tomato
 
     def simple_auth
       @simpleAuth
-    end
-
-    def dns_resolver=(value : Durian::Resolver)
-      @dnsResolver = value
-    end
-
-    def dns_resolver
-      @dnsResolver
     end
 
     def client_timeout=(value : TimeOut)
@@ -49,7 +42,6 @@ module Tomato
       # Attach
       simple_auth.try { |_simple_auth| socket.simple_auth = _simple_auth }
       authentication.try { |_authentication| socket.authentication = _authentication }
-      dns_resolver.try { |_resolver| socket.dns_resolver = _resolver }
 
       # TimeOut
       client_timeout.try do |_timeout|
@@ -58,8 +50,7 @@ module Tomato
       end
 
       # Context
-      context = Context.new socket
-      dns_resolver.try { |_resolver| context.dns_resolver = _resolver }
+      context = Context.new socket, dnsResolver
       remote_timeout.try { |_timeout| context.timeout = _timeout }
 
       # HandShake
@@ -92,7 +83,7 @@ module Tomato
     def accept? : Socket?
       return unless socket = wrapped.accept?
 
-      Socket.new socket
+      Socket.new socket, dnsResolver
     end
   end
 end

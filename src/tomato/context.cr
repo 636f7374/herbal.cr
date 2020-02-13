@@ -1,21 +1,14 @@
 module Tomato
   class Context
     getter client : Socket
+    getter dnsResolver : Durian::Resolver
     property timeout : TimeOut
     property clientEstablish : Bool
     property server : IO
 
-    def initialize(@client : Socket, @timeout : TimeOut = TimeOut.new)
+    def initialize(@client : Socket, @dnsResolver : Durian::Resolver, @timeout : TimeOut = TimeOut.new)
       @clientEstablish = false
       @server = Tomato.empty_io
-    end
-
-    def dns_resolver=(value : Durian::Resolver)
-      @dnsResolver = value
-    end
-
-    def dns_resolver
-      @dnsResolver
     end
 
     def server=(value : IO)
@@ -36,6 +29,8 @@ module Tomato
     end
 
     def connect_server!
+      return unless server.is_a? IO::Memory if server
+
       raise UnEstablish.new unless clientEstablish
       raise UnknownFlag.new unless remote_ip_address = client.remote_ip_address
       raise UnknownFlag.new unless command = client.command

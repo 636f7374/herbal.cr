@@ -55,6 +55,12 @@ module Tomato
       wrapped.closed?
     end
 
+    def buffer_close
+      _wrapped = wrapped
+
+      _wrapped.buffer_close if _wrapped.responds_to? :buffer_close
+    end
+
     def create_remote(host : String, port : Int32) : Durian::TCPSocket?
       create_remote! host, port rescue nil
     end
@@ -85,6 +91,10 @@ module Tomato
 
       @wrapped = _socket
       _socket
+    end
+
+    def connect!(ip_address : ::Socket::IPAddress, command : Command, remote_resolution : Bool = false)
+      connect! wrapped, ip_address.address, ip_address.port, command, false
     end
 
     def connect!(host : String, port : Int32, command : Command, remote_resolution : Bool = false)

@@ -2,6 +2,8 @@ name: tomato
 version: 0.1.0
 
 dependencies:
+  papaya:
+    github: 636f7374/papaya.cr
   durian:
     github: 636f7374/durian.cr
 

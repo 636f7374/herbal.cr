@@ -19,10 +19,10 @@ begin
   buffer = uninitialized UInt8[4096_i32]
   length = client.read buffer.to_slice
 
-  puts [:length, length]
-  puts String.new buffer.to_slice[0_i32, length]
+  STDOUT.puts [:length, length]
+  STDOUT.puts String.new buffer.to_slice[0_i32, length]
 rescue ex
-  puts [ex]
+  STDOUT.puts [ex]
 end
 
 client.close

@@ -1,8 +1,9 @@
 module Tomato
   class Socket < IO
+    getter dnsResolver : Durian::Resolver
     property wrapped : IO
 
-    def initialize(@wrapped : IO)
+    def initialize(@wrapped : IO, @dnsResolver : Durian::Resolver)
     end
 
     def version=(value : Version)
@@ -67,14 +68,6 @@ module Tomato
 
     def remote_domain
       @remoteDomain
-    end
-
-    def dns_resolver=(value : Durian::Resolver)
-      @dnsResolver = value
-    end
-
-    def dns_resolver
-      @dnsResolver
     end
 
     def buffer_close
@@ -239,7 +232,6 @@ module Tomato
 
         self.remote_ip_address = ip_address
       when .domain?
-        raise UnknownDNSResolver.new unless resolver = dns_resolver
         domain = Tomato.extract_domain self
 
         unless domain
@@ -249,7 +241,7 @@ module Tomato
 
         self.remote_domain = domain
 
-        method, ip_address = Durian::Resolver.getaddrinfo! domain.domain, domain.port, resolver
+        method, ip_address = Durian::Resolver.getaddrinfo! domain.domain, domain.port, dnsResolver
         self.remote_ip_address = ip_address
       end
     end
