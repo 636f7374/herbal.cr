@@ -37,6 +37,8 @@
   * Local DNS resolution / Remote DNS resolution
   * TCPConnection / TCPBinding / AssociateUDP
   * Reject Establish (Server)
+* Plugin (Fuzzy Wrapper)
+  * HTTP / 1.1 KeepAlive Wrapper
 * Loosely coupled, Low footprint, High performance.
 * ...
 
