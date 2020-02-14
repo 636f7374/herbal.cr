@@ -1,4 +1,4 @@
-module Tomato::KeepAlive
+module Tomato::Plugin::KeepAlive
   class Progress
     property contentLength : Int64
     property remaining : Int64
@@ -9,12 +9,13 @@ module Tomato::KeepAlive
 
   class Client < IO
     property wrapped : IO
+    property host : String
     property method : String
     property path : String
     property progress : Progress
     property buffer : IO::Memory
 
-    def initialize(@wrapped : IO)
+    def initialize(@wrapped : IO, @host : String)
       @method = "GET"
       @path = "/"
       @progress = Progress.new
@@ -96,6 +97,7 @@ module Tomato::KeepAlive
     def write_payload(slice : Bytes)
       payload = HTTP::Request.new method, path, body: slice
       payload.keep_alive = true
+      payload.header_host = host
       payload.to_io wrapped
     end
 

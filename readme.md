@@ -39,6 +39,7 @@
   * Reject Establish (Server)
 * Plugin (Fuzzy Wrapper)
   * HTTP / 1.1 KeepAlive Wrapper
+  * WebSocket Wrapper
 * Loosely coupled, Low footprint, High performance.
 * ...
 
