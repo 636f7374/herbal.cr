@@ -62,12 +62,12 @@ module Tomato
       @remoteIpAddress
     end
 
-    def remote_domain=(value : Domain)
-      @remoteDomain = value
+    def remote_address=(value : RemoteAddress)
+      @remoteAddress = value
     end
 
-    def remote_domain
-      @remoteDomain
+    def remote_address
+      @remoteAddress
     end
 
     def buffer_close
@@ -108,6 +108,8 @@ module Tomato
 
     def <<(value : String) : IO
       wrapped << value
+
+      self
     end
 
     def flush
@@ -115,7 +117,7 @@ module Tomato
     end
 
     def close
-      wrapped.try &.close
+      wrapped.close
     end
 
     def closed?
@@ -221,6 +223,7 @@ module Tomato
           raise MalformedPacket.new
         end
 
+        self.remote_address = RemoteAddress.new ip_address.address, ip_address.port
         self.remote_ip_address = ip_address
       when .ipv4?
         ip_address = Tomato.extract_ip_address address, self
@@ -230,18 +233,19 @@ module Tomato
           raise MalformedPacket.new
         end
 
+        self.remote_address = RemoteAddress.new ip_address.address, ip_address.port
         self.remote_ip_address = ip_address
       when .domain?
-        domain = Tomato.extract_domain self
+        remote_address = Tomato.extract_domain self
 
-        unless domain
+        unless remote_address
           set_disconnect! version
           raise MalformedPacket.new
         end
 
-        self.remote_domain = domain
+        self.remote_address = remote_address
 
-        method, ip_address = Durian::Resolver.getaddrinfo! domain.domain, domain.port, dnsResolver
+        method, ip_address = Durian::Resolver.getaddrinfo! remote_address.address, remote_address.port, dnsResolver
         self.remote_ip_address = ip_address
       end
     end

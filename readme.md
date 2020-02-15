@@ -129,7 +129,7 @@ end
 ```
 
 ```crystal
-STDOUT.puts context.summary # => [V5, [NoAuthentication, UserNamePassword], TCPConnection, Domain, Socket::IPAddress(203.208.41.68:443), #<Tomato::Domain:0x10ca12900 @domain="safebrowsing.googleapis.com", @port=443>]
+STDOUT.puts context.summary # => [V5, [NoAuthentication, UserNamePassword], TCPConnection, Domain, Socket::IPAddress(54.169.195.247:443), #<Tomato::RemoteAddress:0x10a05a9e0 @address="api.github.com", @port=443>]
 ```
 
 ### Used as Shard

@@ -41,6 +41,8 @@ module Tomato
 
     def <<(value : String) : IO
       wrapped << value
+
+      self
     end
 
     def flush
@@ -48,7 +50,7 @@ module Tomato
     end
 
     def close
-      wrapped.try &.close
+      wrapped.close
     end
 
     def closed?
@@ -61,22 +63,19 @@ module Tomato
       _wrapped.buffer_close if _wrapped.responds_to? :buffer_close
     end
 
-    def create_remote(host : String, port : Int32) : Durian::TCPSocket?
+    def create_remote(host : String, port : Int32) : TCPSocket?
       create_remote! host, port rescue nil
     end
 
-    def create_remote(ip_address : ::Socket::IPAddress) : Durian::TCPSocket?
+    def create_remote(ip_address : ::Socket::IPAddress) : TCPSocket?
       create_remote! ip_address rescue nil
     end
 
-    def create_remote!(host : String, port : Int32) : Durian::TCPSocket?
+    def create_remote!(host : String, port : Int32) : TCPSocket?
       return unless wrapped.is_a? IO::Memory if wrapped
 
       method, ip_address = Durian::Resolver.getaddrinfo! host, port, dnsResolver
-
-      _socket = Durian::TCPSocket.new ip_address, dnsResolver, timeout.connect
-      _socket.read_timeout = timeout.read
-      _socket.write_timeout = timeout.write
+      return unless _socket = create_remote! ip_address
 
       @wrapped = _socket
       _socket

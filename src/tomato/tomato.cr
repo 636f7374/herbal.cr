@@ -88,11 +88,11 @@ module Tomato
     memory
   end
 
-  class Domain
-    property domain : String
+  class RemoteAddress
+    property address : String
     property port : Int32
 
-    def initialize(@domain : String, @port : Int32)
+    def initialize(@address : String, @port : Int32)
     end
   end
 
@@ -206,7 +206,7 @@ module Tomato
     ipv6_address.join
   end
 
-  def self.extract_domain(io : IO) : Domain?
+  def self.extract_domain(io : IO) : RemoteAddress?
     buffer = uninitialized UInt8[1_i32]
     length = io.read buffer.to_slice rescue nil
 
@@ -224,7 +224,7 @@ module Tomato
     port = io.read_bytes UInt16, IO::ByteFormat::BigEndian rescue nil
     return unless _port = port
 
-    Domain.new domain, port.to_i32
+    RemoteAddress.new domain, port.to_i32
   end
 
   def self.extract_ip_address(address_type : Address, io : IO) : ::Socket::IPAddress?

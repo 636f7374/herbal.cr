@@ -25,7 +25,7 @@ module Tomato
        client.command,
        client.address_type,
        client.remote_ip_address,
-       client.remote_domain]
+       client.remote_address]
     end
 
     def connect_server!
