@@ -38,11 +38,7 @@ module Tomato
       @remoteTimeOut
     end
 
-    def process!(socket : Socket, without_establish : Bool = false) : Context
-      # Context
-      context = Context.new socket, dnsResolver
-      remote_timeout.try { |_timeout| context.timeout = _timeout }
-
+    def process!(socket : Socket, without_establish : Bool = false) : Socket
       # HandShake
       if socket.handshake.deny?
         socket.close
@@ -50,24 +46,45 @@ module Tomato
         raise AuthenticationFailed.new
       end
 
-      socket.process
-
-      # Establish
-      return context if without_establish
-      socket.establish
-
-      context.clientEstablish = true
-      context
-    end
-
-    def process(socket : Socket, without_establish : Bool = false) : Context?
+      # Process
       begin
-        process! socket, without_establish
+        socket.process
       rescue ex
         socket.close
 
-        return
+        raise ex
       end
+
+      # Establish
+      return socket if without_establish
+
+      begin
+        socket.establish
+      rescue ex
+        socket.close
+
+        raise ex
+      end
+
+      socket
+    end
+
+    def process(socket : Socket, without_establish : Bool = false) : Socket?
+      process! socket, without_establish rescue nil
+    end
+
+    def upgrade!(socket : Socket, without_establish : Bool = false) : Context
+      process! socket, without_establish
+
+      context = Context.new socket, dnsResolver
+      remote_timeout.try { |_timeout| context.timeout = _timeout }
+      context.clientEstablish = true unless without_establish
+
+      context
+    end
+
+    def upgrade(socket : Socket, without_establish : Bool = false) : Context?
+      upgrade! socket, without_establish rescue nil
     end
 
     def accept? : Socket?

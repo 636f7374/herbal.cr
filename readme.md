@@ -119,7 +119,7 @@ loop do
   while socket = tomato.accept?
     spawn do
       next unless client = socket
-      next unless context = tomato.process client
+      next unless context = tomato.upgrade client
 
       handle_client context
     end
