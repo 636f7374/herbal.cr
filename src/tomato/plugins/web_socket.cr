@@ -20,6 +20,16 @@ module Tomato::Plugin::WebSocket
       @buffer = IO::Memory.new
     end
 
+    def read_timeout=(value : Int | Float | Time::Span | Nil)
+      _wrapped = wrapped
+      _wrapped.read_timeout = value if value if _wrapped.responds_to? :read_timeout=
+    end
+
+    def write_timeout=(value : Int | Float | Time::Span | Nil)
+      _wrapped = wrapped
+      _wrapped.write_timeout = value if value if _wrapped.responds_to? :write_timeout=
+    end
+
     private def update_buffer
       receive_buffer = uninitialized UInt8[4096_i32]
 

@@ -76,16 +76,16 @@ module Tomato
       _wrapped.buffer_close if _wrapped.responds_to? :buffer_close
     end
 
-    def read_timeout=(value : Int | Float | Time::Span)
+    def read_timeout=(value : Int | Float | Time::Span | Nil)
       _wrapped = wrapped
 
-      _wrapped.read_timeout = value if _wrapped.responds_to? :read_timeout=
+      _wrapped.read_timeout = value if value if _wrapped.responds_to? :read_timeout=
     end
 
-    def write_timeout=(value : Int | Float | Time::Span)
+    def write_timeout=(value : Int | Float | Time::Span | Nil)
       _wrapped = wrapped
 
-      _wrapped.write_timeout = value if _wrapped.responds_to? :write_timeout=
+      _wrapped.write_timeout = value if value if _wrapped.responds_to? :write_timeout=
     end
 
     def read_timeout

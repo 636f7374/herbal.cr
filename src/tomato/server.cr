@@ -39,16 +39,6 @@ module Tomato
     end
 
     def process!(socket : Socket, without_establish : Bool = false) : Context
-      # Attach
-      simple_auth.try { |_simple_auth| socket.simple_auth = _simple_auth }
-      authentication.try { |_authentication| socket.authentication = _authentication }
-
-      # TimeOut
-      client_timeout.try do |_timeout|
-        socket.read_timeout = _timeout.read
-        socket.write_timeout = _timeout.write
-      end
-
       # Context
       context = Context.new socket, dnsResolver
       remote_timeout.try { |_timeout| context.timeout = _timeout }
@@ -82,8 +72,19 @@ module Tomato
 
     def accept? : Socket?
       return unless socket = wrapped.accept?
+      _socket = Socket.new socket, dnsResolver
 
-      Socket.new socket, dnsResolver
+      # Attach
+      simple_auth.try { |_simple_auth| _socket.simple_auth = _simple_auth }
+      authentication.try { |_authentication| _socket.authentication = _authentication }
+
+      # TimeOut
+      client_timeout.try do |_timeout|
+        _socket.read_timeout = _timeout.read
+        _socket.write_timeout = _timeout.write
+      end
+
+      _socket
     end
   end
 end
