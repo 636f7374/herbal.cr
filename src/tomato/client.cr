@@ -4,7 +4,19 @@ module Tomato
     getter timeout : TimeOut
     property wrapped : IO
 
-    def initialize(@dnsResolver : Durian::Resolver, @wrapped : IO = Tomato.empty_io, @timeout : TimeOut = TimeOut.new)
+    def initialize(@dnsResolver : Durian::Resolver, @wrapped : IO, @timeout : TimeOut = TimeOut.new)
+    end
+
+    def self.new(host : String, port : Int32, dnsResolver : Durian::Resolver, timeout : TimeOut = TimeOut.new)
+      wrapped = Durian::TCPSocket.connect host, port, dnsResolver, timeout.connect
+
+      new dnsResolver, wrapped, timeout
+    end
+
+    def self.new(ip_address : Socket::IPAddress, dnsResolver : Durian::Resolver, timeout : TimeOut = TimeOut.new)
+      wrapped = TCPSocket.connect ip_address, timeout.connect
+
+      new dnsResolver, wrapped, timeout
     end
 
     def simple_auth=(value : SimpleAuth)

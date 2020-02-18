@@ -20,12 +20,7 @@ module Tomato
     end
 
     def summary
-      [client.version,
-       client.authentication_methods,
-       client.command,
-       client.address_type,
-       client.remote_ip_address,
-       client.remote_address]
+      Summary.from_socket client
     end
 
     def connect_server!

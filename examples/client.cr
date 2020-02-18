@@ -8,11 +8,10 @@ resolver = Durian::Resolver.new servers
 resolver.ip_cache = Durian::Resolver::Cache::IPAddress.new
 
 # Tomato
-client = Tomato::Client.new resolver
-client.create_remote "0.0.0.0", 1234_i32
-
 begin
+  client = Tomato::Client.new "0.0.0.0", 1234_i32, resolver
   client.connect! "www.example.com", 80_i32, Tomato::Command::TCPConnection, true
+
   request = HTTP::Request.new "GET", "http://www.example.com"
   request.to_io client
 
@@ -25,4 +24,4 @@ rescue ex
   STDOUT.puts [ex]
 end
 
-client.close
+client.try &.close

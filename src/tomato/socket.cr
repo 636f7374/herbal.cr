@@ -191,7 +191,6 @@ module Tomato
 
       optional.times do
         length = read buffer.to_slice
-        raise MalformedPacket.new unless length
         raise MalformedPacket.new if length.zero?
 
         next unless value = Authentication.from_value? buffer.to_slice[0_i32].to_i32
@@ -296,5 +295,6 @@ module Tomato
     raise UnknownFlag.new unless _version = version
 
     write Bytes[_version.to_i, Status::ConnectionDenied.to_i]
+    flush
   end
 end
