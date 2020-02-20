@@ -70,6 +70,10 @@ module Tomato
       @remoteAddress
     end
 
+    def summary
+      Summary.from_socket self
+    end
+
     def buffer_close
       _wrapped = wrapped
 
@@ -96,6 +100,24 @@ module Tomato
     def write_timeout
       _wrapped = wrapped
       _wrapped.write_timeout if _wrapped.responds_to? :write_timeout
+    end
+
+    def wrapped_local_address : ::Socket::Address?
+      _wrapped = wrapped
+
+      if _wrapped.responds_to? :local_address
+        local = _wrapped.local_address
+        local if local.is_a? ::Socket::Address
+      end
+    end
+
+    def wrapped_remote_address : ::Socket::Address?
+      _wrapped = wrapped
+
+      if _wrapped.responds_to? :remote_address
+        remote = _wrapped.remote_address
+        remote if remote.is_a? ::Socket::Address
+      end
     end
 
     def read(slice : Bytes) : Int32
