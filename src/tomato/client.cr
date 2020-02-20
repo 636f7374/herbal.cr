@@ -1,22 +1,37 @@
 module Tomato
   class Client < IO
     getter dnsResolver : Durian::Resolver
-    getter timeout : TimeOut
     property wrapped : IO
 
-    def initialize(@dnsResolver : Durian::Resolver, @wrapped : IO, @timeout : TimeOut = TimeOut.new)
+    def initialize(@wrapped : IO, @dnsResolver : Durian::Resolver)
+    end
+
+    def self.new(host : String, port : Int32, dnsResolver : Durian::Resolver, connectTimeout : Int | Float? = nil)
+      wrapped = Durian::TCPSocket.connect host, port, dnsResolver, connectTimeout
+
+      new wrapped, dnsResolver
+    end
+
+    def self.new(ip_address : ::Socket::IPAddress, dnsResolver : Durian::Resolver, connectTimeout : Int | Float? = nil)
+      wrapped = TCPSocket.connect ip_address, connectTimeout
+
+      new wrapped, dnsResolver
     end
 
     def self.new(host : String, port : Int32, dnsResolver : Durian::Resolver, timeout : TimeOut = TimeOut.new)
       wrapped = Durian::TCPSocket.connect host, port, dnsResolver, timeout.connect
+      wrapped.read_timeout = timeout.read
+      wrapped.write_timeout = timeout.write
 
-      new dnsResolver, wrapped, timeout
+      new wrapped, dnsResolver
     end
 
-    def self.new(ip_address : Socket::IPAddress, dnsResolver : Durian::Resolver, timeout : TimeOut = TimeOut.new)
-      wrapped = TCPSocket.connect ip_address, timeout.connect
+    def self.new(ip_address : ::Socket::IPAddress, dnsResolver : Durian::Resolver, timeout : TimeOut = TimeOut.new)
+      wrapped = TCPSocket.connect ip_address, connectTimeout, timeout.connect
+      wrapped.read_timeout = timeout.read
+      wrapped.write_timeout = timeout.write
 
-      new dnsResolver, wrapped, timeout
+      new wrapped, dnsResolver
     end
 
     def simple_auth=(value : SimpleAuth)
@@ -75,33 +90,26 @@ module Tomato
       _wrapped.buffer_close if _wrapped.responds_to? :buffer_close
     end
 
-    def create_remote(host : String, port : Int32) : TCPSocket?
-      create_remote! host, port rescue nil
+    def read_timeout=(value : Int | Float | Time::Span | Nil)
+      _wrapped = wrapped
+
+      _wrapped.read_timeout = value if value if _wrapped.responds_to? :read_timeout=
     end
 
-    def create_remote(ip_address : ::Socket::IPAddress) : TCPSocket?
-      create_remote! ip_address rescue nil
+    def write_timeout=(value : Int | Float | Time::Span | Nil)
+      _wrapped = wrapped
+
+      _wrapped.write_timeout = value if value if _wrapped.responds_to? :write_timeout=
     end
 
-    def create_remote!(host : String, port : Int32) : TCPSocket?
-      return unless wrapped.is_a? IO::Memory if wrapped
-
-      method, ip_address = Durian::Resolver.getaddrinfo! host, port, dnsResolver
-      return unless _socket = create_remote! ip_address
-
-      @wrapped = _socket
-      _socket
+    def read_timeout
+      _wrapped = wrapped
+      _wrapped.read_timeout if _wrapped.responds_to? :read_timeout
     end
 
-    def create_remote!(ip_address : ::Socket::IPAddress) : TCPSocket?
-      return unless wrapped.is_a? IO::Memory if wrapped
-
-      _socket = TCPSocket.new ip_address, timeout.connect
-      _socket.read_timeout = timeout.read
-      _socket.write_timeout = timeout.write
-
-      @wrapped = _socket
-      _socket
+    def write_timeout
+      _wrapped = wrapped
+      _wrapped.write_timeout if _wrapped.responds_to? :write_timeout
     end
 
     def connect!(ip_address : ::Socket::IPAddress, command : Command, remote_resolution : Bool = false)
