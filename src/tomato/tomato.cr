@@ -188,6 +188,7 @@ module Tomato
     end
 
     return "::" if ipv6_address.empty?
+    ipv6_address.pop if "::" == ipv6_address.last || ":" == ipv6_address.last
 
     address = ipv6_address.join
     return String.build { |io| io << "::" << address } if address.to_i?
