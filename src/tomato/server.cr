@@ -14,12 +14,12 @@ module Tomato
       @authentication || Authentication::NoAuthentication
     end
 
-    def simple_auth=(value : Proc(String, String?, Tomato::Verify))
-      @simpleAuth = value
+    def on_auth=(value : Proc(String, String?, Tomato::Verify))
+      @onAuth = value
     end
 
-    def simple_auth
-      @simpleAuth
+    def on_auth
+      @onAuth
     end
 
     def client_timeout=(value : TimeOut)
@@ -92,7 +92,7 @@ module Tomato
       _socket = Socket.new socket, dnsResolver
 
       # Attach
-      simple_auth.try { |_simple_auth| _socket.simple_auth = _simple_auth }
+      on_auth.try { |_on_auth| _socket.on_auth = _on_auth }
       authentication.try { |_authentication| _socket.authentication = _authentication }
 
       # TimeOut

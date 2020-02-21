@@ -30,12 +30,12 @@ module Tomato
       @authentication || Authentication::NoAuthentication
     end
 
-    def simple_auth=(value : Proc(String, String?, Tomato::Verify))
-      @simpleAuth = value
+    def on_auth=(value : Proc(String, String?, Tomato::Verify))
+      @onAuth = value
     end
 
-    def simple_auth
-      @simpleAuth
+    def on_auth
+      @onAuth
     end
 
     def command=(value : Command)
@@ -146,7 +146,7 @@ module Tomato
       wrapped.closed?
     end
 
-    def auth : Verify
+    def auth_challenge : Verify
       return Verify::Deny unless _version = version
       return Verify::Deny unless _methods = authentication_methods
 
@@ -178,7 +178,7 @@ module Tomato
         password = Tomato.get_password self
 
         # SimpleAuth Callback
-        call = simple_auth.try &.call username, password
+        call = on_auth.try &.call username, password
 
         # 0x01 For Current version of UserName / Password Authentication
         # https://en.wikipedia.org/wiki/SOCKS
@@ -223,7 +223,7 @@ module Tomato
       self.authentication_methods = authentication_methods
 
       # Authentication
-      auth
+      auth_challenge
     end
 
     def process
@@ -266,7 +266,13 @@ module Tomato
 
         self.remote_address = remote_address
 
-        method, ip_address = Durian::Resolver.getaddrinfo! remote_address.address, remote_address.port, dnsResolver
+        begin
+          method, ip_address = Durian::Resolver.getaddrinfo! remote_address.address, remote_address.port, dnsResolver
+        rescue ex
+          set_disconnect! version
+          raise ex
+        end
+
         self.remote_ip_address = ip_address
       end
     end

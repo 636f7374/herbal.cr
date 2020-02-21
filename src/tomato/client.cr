@@ -34,12 +34,12 @@ module Tomato
       new wrapped, dnsResolver
     end
 
-    def simple_auth=(value : SimpleAuth)
-      @simpleAuth = value
+    def on_auth=(value : SimpleAuth)
+      @onAuth = value
     end
 
-    def simple_auth
-      @simpleAuth
+    def on_auth
+      @onAuth
     end
 
     def authentication_methods=(value : Array(Authentication))
@@ -122,7 +122,7 @@ module Tomato
 
     def connect!(socket : IO, host : String, port : Int32, command : Command, remote_resolution : Bool = false)
       handshake socket
-      auth socket
+      auth_challenge socket
 
       case remote_resolution
       when true
@@ -152,7 +152,7 @@ module Tomato
       socket.flush
     end
 
-    private def auth(socket : IO)
+    private def auth_challenge(socket : IO)
       raise UnknownFlag.new unless _version = version
       raise MalformedPacket.new unless _get_version = Tomato.get_version socket
       raise MismatchFlag.new if _get_version != _version
@@ -164,7 +164,7 @@ module Tomato
 
       case _method
       when Authentication::UserNamePassword
-        raise UnknownFlag.new unless auth = simple_auth
+        raise UnknownFlag.new unless auth = on_auth
 
         # 0x01 For Current version of UserName / Password Authentication
         # https://en.wikipedia.org/wiki/SOCKS
