@@ -129,36 +129,15 @@ module Tomato
     buffer.to_slice
   end
 
-  def self.ipv6_address_to_bytes(ip_address : ::Socket::IPAddress) : Bytes
-    buffer = IO::Memory.new 16_i32
-    address = ip_address.address.split ":"
+  def self.ipv6_address_to_bytes(ip_address : ::Socket::IPAddress) : Bytes?
+    return unless ip_address.family.inet6?
 
-    address.each do |part|
-      split = part.split String.new
+    pointer = ip_address.to_unsafe.as LibC::SockaddrIn6*
+    ipv6_address = pointer.value.sin6_addr.__u6_addr.__u6_addr8
 
-      offset = 3_i32
-      _times = 1_i32
-
-      if part.empty?
-        part = "0000"
-        _times = 2_i32
-      end
-
-      _times.times do
-        case split.size
-        when 3_i32
-          buffer.write Bytes[part[0_i32..0_i32].to_i 16_i32]
-          buffer.write Bytes[part[1_i32..1_i32].to_i 16_i32]
-          buffer.write Bytes[part[2_i32..2_i32].to_i 16_i32]
-          buffer.write Bytes[0_i32]
-        else
-          buffer.write Bytes[part[0_i32..1_i32].to_i 16_i32]
-          buffer.write Bytes[part[2_i32..3_i32].to_i 16_i32]
-        end
-      end
-    end
-
-    buffer.to_slice
+    memory = IO::Memory.new 16_i32
+    memory.write ipv6_address.to_slice
+    memory.to_slice
   end
 
   def self.decode_ipv6_address(io : IO) : String?
@@ -184,7 +163,7 @@ module Tomato
 
       case {first_hex.first, first_hex.last, _last_hex.first, _last_hex.last}
       when {"0", "0", "0", "0"}
-        colon = ipv6_address.last == ":" && ipv6_address[-2_i32]? == ":"
+        colon = ":" == ipv6_address.last && ":" == ipv6_address[-2_i32]?
         ipv6_address << ":" unless colon
       when {"0", "0", "0", _last_hex.last}
         ipv6_address << _last_hex.last << ":"

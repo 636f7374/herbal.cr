@@ -218,7 +218,11 @@ module Tomato
       when .inet?
         memory.write Tomato.ipv4_address_to_bytes ip_address
       when .inet6?
-        memory.write Tomato.ipv6_address_to_bytes ip_address
+        unless ipv6_address = Tomato.ipv6_address_to_bytes ip_address
+          raise MalformedPacket.new "Invalid Ipv6 Address"
+        end
+
+        memory.write ipv6_address
       end
 
       memory.write_bytes ip_address.port.to_u16, IO::ByteFormat::BigEndian

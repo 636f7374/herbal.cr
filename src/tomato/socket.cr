@@ -293,8 +293,12 @@ module Tomato
         memory.write Tomato.ipv4_address_to_bytes ip_address
         memory.write_bytes ip_address.port.to_u16, IO::ByteFormat::BigEndian
       when .ipv6?
+        unless ipv6_address = Tomato.ipv6_address_to_bytes ip_address
+          raise MalformedPacket.new "Invalid Ipv6 Address"
+        end
+
         memory.write Bytes[_address_type.to_i]
-        memory.write Tomato.ipv6_address_to_bytes ip_address
+        memory.write ipv6_address
         memory.write_bytes ip_address.port.to_u16, IO::ByteFormat::BigEndian
       when .domain?
         case ip_address.family
@@ -302,8 +306,12 @@ module Tomato
           memory.write Bytes[Tomato::Address::Ipv4.to_i]
           memory.write Tomato.ipv4_address_to_bytes ip_address
         when .inet6?
+          unless ipv6_address = Tomato.ipv6_address_to_bytes ip_address
+            raise MalformedPacket.new "Invalid Ipv6 Address"
+          end
+
           memory.write Bytes[Tomato::Address::Ipv6.to_i]
-          memory.write Tomato.ipv6_address_to_bytes ip_address
+          memory.write ipv6_address
         end
 
         memory.write_bytes ip_address.port.to_u16, IO::ByteFormat::BigEndian
