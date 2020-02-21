@@ -133,10 +133,16 @@ module Tomato
     return unless ip_address.family.inet6?
 
     pointer = ip_address.to_unsafe.as LibC::SockaddrIn6*
-    ipv6_address = pointer.value.sin6_addr.__u6_addr.__u6_addr8
-
     memory = IO::Memory.new 16_i32
-    memory.write ipv6_address.to_slice
+
+    {% if flag? :darwin %}
+      ipv6_address = pointer.value.sin6_addr.__u6_addr.__u6_addr8
+      memory.write ipv6_address.to_slice
+    {% else %}
+      ipv6_address = pointer.value.sin6_addr.__in6_u.__u6_addr8
+      memory.write ipv6_address.to_slice
+    {% end %}
+
     memory.to_slice
   end
 
@@ -163,6 +169,8 @@ module Tomato
 
       case {first_hex.first, first_hex.last, _last_hex.first, _last_hex.last}
       when {"0", "0", "0", "0"}
+        next if ipv6_address.empty?
+
         colon = ":" == ipv6_address.last && ":" == ipv6_address[-2_i32]?
         ipv6_address << ":" unless colon
       when {"0", "0", "0", _last_hex.last}
@@ -179,10 +187,12 @@ module Tomato
       end
     end
 
-    ipv6_address.pop if "::" == ipv6_address.last || ":" == ipv6_address.last
+    return "::" if ipv6_address.empty?
 
-    buffer.close
-    ipv6_address.join
+    address = ipv6_address.join
+    return String.build { |io| io << "::" << address } if address.to_i?
+
+    address
   end
 
   def self.extract_domain(io : IO) : RemoteAddress?
