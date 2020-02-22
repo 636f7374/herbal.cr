@@ -28,12 +28,12 @@ tomato.remote_timeout = Tomato::TimeOut.new
 # end
 
 loop do
-  while socket = tomato.accept?
-    spawn do
-      next unless client = socket
-      next unless context = tomato.upgrade client
+  socket = tomato.accept?
 
-      handle_client context
-    end
+  spawn do
+    next unless client = socket
+    next unless context = tomato.upgrade client
+
+    handle_client context
   end
 end
