@@ -81,19 +81,19 @@ module Tomato
     end
   end
 
-  def self.empty_io : IO::Memory
-    memory = IO::Memory.new 0_i32
-    memory.close
-
-    memory
-  end
-
   class RemoteAddress
     property address : String
     property port : Int32
 
     def initialize(@address : String, @port : Int32)
     end
+  end
+
+  def self.empty_io : IO::Memory
+    memory = IO::Memory.new 0_i32
+    memory.close
+
+    memory
   end
 
   def self.to_ip_address(host : String, port : Int32)
@@ -112,6 +112,10 @@ module Tomato
     return if 3_u8 < optional
 
     optional.to_i32
+  end
+
+  def self.unspecified_ip_address
+    ::Socket::IPAddress.new ::Socket::IPAddress::UNSPECIFIED, 0_i32
   end
 
   def self.to_address_type(ip_address : ::Socket::IPAddress)

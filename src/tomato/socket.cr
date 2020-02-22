@@ -226,7 +226,7 @@ module Tomato
       auth_challenge
     end
 
-    def process
+    def process(sync_resolution : Bool = false)
       raise MalformedPacket.new unless version = Tomato.get_version self
       raise MalformedPacket.new unless command = Tomato.get_command self
       raise MalformedPacket.new unless reserved = Tomato.get_reserved self
@@ -265,6 +265,7 @@ module Tomato
         end
 
         self.remote_address = remote_address
+        return unless sync_resolution
 
         begin
           method, ip_address = Durian::Resolver.getaddrinfo! remote_address.address, remote_address.port, dnsResolver
@@ -277,10 +278,13 @@ module Tomato
       end
     end
 
-    def establish
-      raise UnknownFlag.new unless ip_address = remote_ip_address
+    def establish(sync_resolution : Bool = false)
       raise UnknownFlag.new unless _version = version
       raise UnknownFlag.new unless _address_type = address_type
+
+      ip_address = remote_ip_address
+      ip_address = Tomato.unspecified_ip_address if _address_type.domain? unless sync_resolution
+      raise UnknownFlag.new unless ip_address
 
       memory = IO::Memory.new
       memory.write Bytes[_version.to_i]

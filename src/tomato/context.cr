@@ -25,24 +25,24 @@ module Tomato
 
     def connect_server!
       return unless server.is_a? IO::Memory if server
-
-      raise UnEstablish.new unless clientEstablish
-      raise UnknownFlag.new unless remote_ip_address = client.remote_ip_address
       raise UnknownFlag.new unless command = client.command
+      raise UnEstablish.new unless clientEstablish
+      raise UnknownFlag.new unless remote_address = client.remote_address
+
+      host = remote_address.address
+      port = remote_address.port
 
       case command
       when .tcp_connection?
-        remote = TCPSocket.new remote_ip_address, timeout.connect
+        remote = Durian::TCPSocket.connect host, port, dnsResolver, timeout.connect
       when .tcp_binding?
-        remote = TCPSocket.new remote_ip_address, timeout.connect
-
+        remote = Durian::TCPSocket.connect host, port, dnsResolver, timeout.connect
         remote.reuse_address = true
         remote.reuse_port = true
         remote.bind remote.local_address
         remote.listen
       when .associate_udp?
-        remote = UDPSocket.new remote_ip_address.family
-        remote.connect remote_ip_address
+        remote = Durian::Resolver.get_udp_socket! host, port, dnsResolver, timeout.connect
       end
 
       @server = remote if remote

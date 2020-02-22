@@ -38,7 +38,7 @@ module Tomato
       @remoteTimeOut
     end
 
-    def process!(socket : Socket, without_establish : Bool = false) : Socket
+    def process!(socket : Socket, sync_resolution : Bool = false, skip_establish : Bool = false) : Socket
       # HandShake
       if socket.handshake.deny?
         socket.close
@@ -48,7 +48,7 @@ module Tomato
 
       # Process
       begin
-        socket.process
+        socket.process sync_resolution
       rescue ex
         socket.close
 
@@ -56,10 +56,10 @@ module Tomato
       end
 
       # Establish
-      return socket if without_establish
+      return socket if skip_establish
 
       begin
-        socket.establish
+        socket.establish sync_resolution
       rescue ex
         socket.close
 
@@ -69,22 +69,22 @@ module Tomato
       socket
     end
 
-    def process(socket : Socket, without_establish : Bool = false) : Socket?
-      process! socket, without_establish rescue nil
+    def process(socket : Socket, sync_resolution : Bool = false, skip_establish : Bool = false) : Socket?
+      process! socket, sync_resolution, skip_establish rescue nil
     end
 
-    def upgrade!(socket : Socket, without_establish : Bool = false) : Context
-      process! socket, without_establish
+    def upgrade!(socket : Socket, sync_resolution : Bool = false, skip_establish : Bool = false) : Context
+      process! socket, sync_resolution, skip_establish
 
       context = Context.new socket, dnsResolver
       remote_timeout.try { |_timeout| context.timeout = _timeout }
-      context.clientEstablish = true unless without_establish
+      context.clientEstablish = true unless skip_establish
 
       context
     end
 
-    def upgrade(socket : Socket, without_establish : Bool = false) : Context?
-      upgrade! socket, without_establish rescue nil
+    def upgrade(socket : Socket, sync_resolution : Bool = false, skip_establish : Bool = false) : Context?
+      upgrade! socket, sync_resolution, skip_establish rescue nil
     end
 
     def accept? : Socket?
