@@ -37,6 +37,8 @@ module Tomato::Plugin::WebSocket
         receive = wrapped.receive receive_buffer.to_slice
 
         case receive.opcode
+        when Opcode::PING
+          wrapped.pong
         when Opcode::TEXT, Opcode::BINARY
           progress.payloadLength = receive.size
           progress.remaining = receive.size
@@ -68,6 +70,7 @@ module Tomato::Plugin::WebSocket
     end
 
     def write(slice : Bytes) : Nil
+      wrapped.ping
       wrapped.send slice
     end
 
