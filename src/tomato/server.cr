@@ -40,10 +40,14 @@ module Tomato
 
     def process!(socket : Socket, sync_resolution : Bool = false, skip_establish : Bool = false) : Socket
       # HandShake
-      if socket.handshake.deny?
+      begin
+        handshake = socket.handshake
+
+        raise AuthenticationFailed.new if handshake.deny?
+      rescue ex
         socket.close
 
-        raise AuthenticationFailed.new
+        raise ex
       end
 
       # Process
