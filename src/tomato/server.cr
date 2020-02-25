@@ -1,9 +1,9 @@
 module Tomato
   class Server
-    getter wrapped : TCPServer | UNIXServer
+    getter wrapped : ::Socket::Server
     getter dnsResolver : Durian::Resolver
 
-    def initialize(@wrapped : TCPServer | UNIXServer, @dnsResolver : Durian::Resolver)
+    def initialize(@wrapped : ::Socket::Server, @dnsResolver : Durian::Resolver)
     end
 
     def authentication=(value : Authentication)
