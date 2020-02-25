@@ -13,13 +13,11 @@ module Tomato::Plugin::KeepAlive
     property method : String
     property path : String
     property progress : Progress
-    property buffer : IO::Memory
 
     def initialize(@wrapped : IO, @host : String)
       @method = "GET"
       @path = "/"
       @progress = Progress.new
-      @buffer = IO::Memory.new
     end
 
     def self.new(wrapped : IO, host : String, port : Int32)
@@ -44,10 +42,6 @@ module Tomato::Plugin::KeepAlive
     def write_timeout
       _wrapped = wrapped
       _wrapped.write_timeout if _wrapped.responds_to? :write_timeout
-    end
-
-    def buffer_close
-      buffer.close
     end
 
     private def from_io
@@ -87,29 +81,28 @@ module Tomato::Plugin::KeepAlive
     end
 
     def write(slice : Bytes) : Nil
-      return write_payload slice if buffer.closed?
-
-      buffer.write slice
+      write_payload slice
     end
 
     def <<(value : String)
-      buffer << value
+      write_payload value
 
       self
     end
 
     def write_payload(slice : Bytes)
-      payload = HTTP::Request.new method, path, body: slice
+      write_payload String.new slice
+    end
+
+    def write_payload(value : String)
+      payload = HTTP::Request.new method, path, body: value
       payload.keep_alive = true
       payload.header_host = host
       payload.to_io wrapped
     end
 
     def flush
-      return wrapped.flush if buffer.closed?
-
-      write_payload buffer.to_slice
-      buffer.rewind ensure buffer.clear
+      wrapped.flush
     end
 
     def close
@@ -125,12 +118,10 @@ module Tomato::Plugin::KeepAlive
     property wrapped : IO
     property statusCode : Int32
     property progress : Progress
-    property buffer : IO::Memory
 
     def initialize(@wrapped : IO)
       @statusCode = 200_i32
       @progress = Progress.new
-      @buffer = IO::Memory.new
     end
 
     def read_timeout=(value : Int | Float | Time::Span | Nil)
@@ -151,10 +142,6 @@ module Tomato::Plugin::KeepAlive
     def write_timeout
       _wrapped = wrapped
       _wrapped.write_timeout if _wrapped.responds_to? :write_timeout
-    end
-
-    def buffer_close
-      buffer.close
     end
 
     private def from_io
@@ -196,28 +183,27 @@ module Tomato::Plugin::KeepAlive
     end
 
     def write(slice : Bytes) : Nil
-      return write_payload slice if buffer.closed?
-
-      buffer.write slice
+      write_payload slice
     end
 
     def <<(value : String)
-      buffer << value
+      write_payload value
 
       self
     end
 
     def write_payload(slice : Bytes)
-      payload = HTTP::Client::Response.new statusCode, body: String.new slice
+      write_payload String.new slice
+    end
+
+    def write_payload(value : String)
+      payload = HTTP::Client::Response.new statusCode, body: value
       payload.keep_alive = true
       payload.to_io wrapped
     end
 
     def flush
-      return wrapped.flush if buffer.closed?
-
-      write_payload buffer.to_slice
-      buffer.rewind ensure buffer.clear
+      wrapped.flush
     end
 
     def close

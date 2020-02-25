@@ -84,12 +84,6 @@ module Tomato
       wrapped.closed?
     end
 
-    def buffer_close
-      _wrapped = wrapped
-
-      _wrapped.buffer_close if _wrapped.responds_to? :buffer_close
-    end
-
     def read_timeout=(value : Int | Float | Time::Span | Nil)
       _wrapped = wrapped
 

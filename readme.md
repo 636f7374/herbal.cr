@@ -68,9 +68,13 @@ begin
   client = Tomato::Client.new "0.0.0.0", 1234_i32, resolver
   client.connect! "www.example.com", 80_i32, Tomato::Command::TCPConnection, true
 
+  # Write Payload
+  memory = IO::Memory.new
   request = HTTP::Request.new "GET", "http://www.example.com"
-  request.to_io client
+  request.to_io memory
+  client.write memory.to_slice
 
+  # _Read Payload
   buffer = uninitialized UInt8[4096_i32]
   length = client.read buffer.to_slice
 
@@ -109,8 +113,8 @@ tomato.client_timeout = Tomato::TimeOut.new
 tomato.remote_timeout = Tomato::TimeOut.new
 
 # Authentication (Optional)
-# server.authentication = Tomato::Authentication::UserNamePassword
-# server.on_auth = ->(user_name : String, password : String?) do
+# tomato.authentication = Tomato::Authentication::UserNamePassword
+# tomato.on_auth = ->(user_name : String, password : String?) do
 #  STDOUT.puts [user_name, password]
 #  Tomato::Verify::Pass
 # end
@@ -128,7 +132,7 @@ end
 ```
 
 ```crystal
-STDOUT.puts context.summary # => [V5, [NoAuthentication, UserNamePassword], TCPConnection, Domain, Socket::IPAddress(54.169.195.247:443), #<Tomato::RemoteAddress:0x10a05a9e0 @address="api.github.com", @port=443>]
+STDOUT.puts context.summary # => Tomato::Summary(@version=V5, @authenticationMethods=[NoAuthentication], @command=TCPConnection, @addressType=Domain, @remoteIpAddress=nil, @remoteAddress=#<Tomato::RemoteAddress:0x13f0a9340 @address="api.github.com", @port=443>)
 ```
 
 ### Used as Shard

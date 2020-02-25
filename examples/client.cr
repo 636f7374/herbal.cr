@@ -12,9 +12,13 @@ begin
   client = Tomato::Client.new "0.0.0.0", 1234_i32, resolver
   client.connect! "www.example.com", 80_i32, Tomato::Command::TCPConnection, true
 
+  # Write Payload
+  memory = IO::Memory.new
   request = HTTP::Request.new "GET", "http://www.example.com"
-  request.to_io client
+  request.to_io memory
+  client.write memory.to_slice
 
+  # _Read Payload
   buffer = uninitialized UInt8[4096_i32]
   length = client.read buffer.to_slice
 
