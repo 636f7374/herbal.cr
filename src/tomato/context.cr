@@ -45,7 +45,7 @@ module Tomato
         remote = Durian::Resolver.get_udp_socket! host, port, dnsResolver, timeout.connect
       end
 
-      @server = remote if remote
+      self.server = remote if remote
       remote.try &.read_timeout = timeout.read
       remote.try &.write_timeout = timeout.write
 
@@ -53,8 +53,8 @@ module Tomato
     end
 
     def all_close
-      client.close
-      server.close
+      client.close rescue nil
+      server.close rescue nil
     end
 
     def transport
@@ -74,11 +74,7 @@ module Tomato
         channel.send true
       end
 
-      if channel.receive
-        client.close rescue nil
-        server.close rescue nil
-      end
-
+      all_close if channel.receive
       channel.receive
     end
 
@@ -86,10 +82,7 @@ module Tomato
       begin
         connect_server!
       rescue ex
-        server.close
-        client.close
-
-        return
+        return all_close
       end
 
       transport
@@ -109,11 +102,16 @@ module Tomato
       self.clientEstablish = true
     end
 
-    def reject_establish!
+    private def reject_establish!
       return if clientEstablish
 
       client.reject_establish!
-      client.close
+    end
+
+    def reject_establish
+      reject_establish! rescue nil
+
+      all_close
     end
   end
 end

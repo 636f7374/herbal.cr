@@ -192,7 +192,7 @@ module Tomato
       flush
     end
 
-    def handshake : Verify
+    def handshake! : Verify
       buffer = uninitialized UInt8[1_i32]
 
       # Version
@@ -220,7 +220,7 @@ module Tomato
       auth_challenge
     end
 
-    def process(sync_resolution : Bool = false)
+    def process!(sync_resolution : Bool = false)
       raise MalformedPacket.new unless version = Tomato.get_version self
       raise MalformedPacket.new unless command = Tomato.get_command self
       raise MalformedPacket.new unless reserved = Tomato.get_reserved self
@@ -272,7 +272,7 @@ module Tomato
       end
     end
 
-    def establish(sync_resolution : Bool = false)
+    def establish!(sync_resolution : Bool = false)
       raise UnknownFlag.new unless _version = version
       raise UnknownFlag.new unless _address_type = address_type
 

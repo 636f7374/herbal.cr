@@ -41,7 +41,7 @@ module Tomato
     def process!(socket : Socket, sync_resolution : Bool = false, skip_establish : Bool = false) : Socket
       # HandShake
       begin
-        handshake = socket.handshake
+        handshake = socket.handshake!
 
         raise AuthenticationFailed.new if handshake.deny?
       rescue ex
@@ -52,7 +52,7 @@ module Tomato
 
       # Process
       begin
-        socket.process sync_resolution
+        socket.process! sync_resolution
       rescue ex
         socket.close
 
@@ -63,7 +63,7 @@ module Tomato
       return socket if skip_establish
 
       begin
-        socket.establish sync_resolution
+        socket.establish! sync_resolution
       rescue ex
         socket.close
 
