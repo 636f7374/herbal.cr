@@ -121,8 +121,13 @@ module Tomato
       case remote_resolution
       when true
         ip_address = Tomato.to_ip_address host, port
-        host = ip_address.address if ip_address
-        process socket, host, port, command
+
+        case ip_address
+        when ::Socket::IPAddress
+          process socket, ip_address, command
+        else
+          process socket, host, port, command
+        end
       when false
         method, ip_address = Durian::Resolver.getaddrinfo! host, port, dnsResolver
         process socket, ip_address, command
