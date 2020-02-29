@@ -106,6 +106,11 @@ module Tomato
       _wrapped.write_timeout if _wrapped.responds_to? :write_timeout
     end
 
+    def all_free
+      _wrapped = wrapped
+      _wrapped.all_free if _wrapped.responds_to? :all_free
+    end
+
     def connect!(ip_address : ::Socket::IPAddress, command : Command, remote_resolution : Bool = false)
       connect! wrapped, ip_address.address, ip_address.port, command, false
     end

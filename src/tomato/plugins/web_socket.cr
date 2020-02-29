@@ -30,6 +30,21 @@ module Tomato::Plugin::WebSocket
       _wrapped.write_timeout = value if value if _wrapped.responds_to? :write_timeout=
     end
 
+    def read_timeout
+      _wrapped = wrapped
+      _wrapped.read_timeout if _wrapped.responds_to? :read_timeout
+    end
+
+    def write_timeout
+      _wrapped = wrapped
+      _wrapped.write_timeout if _wrapped.responds_to? :write_timeout
+    end
+
+    def all_free
+      _wrapped = wrapped
+      _wrapped.all_free if _wrapped.responds_to? :all_free
+    end
+
     private def update_buffer
       receive_buffer = uninitialized UInt8[4096_i32]
 

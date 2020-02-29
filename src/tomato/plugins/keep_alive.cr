@@ -44,6 +44,11 @@ module Tomato::Plugin::KeepAlive
       _wrapped.write_timeout if _wrapped.responds_to? :write_timeout
     end
 
+    def all_free
+      _wrapped = wrapped
+      _wrapped.all_free if _wrapped.responds_to? :all_free
+    end
+
     private def from_io
       HTTP::Client::Response.from_io wrapped, ignore_body: true
     end
