@@ -132,7 +132,7 @@ end
 ```
 
 ```crystal
-STDOUT.puts context.summary # => Tomato::Summary(@version=V5, @authenticationMethods=[NoAuthentication], @command=TCPConnection, @addressType=Domain, @remoteIpAddress=nil, @remoteAddress=#<Tomato::RemoteAddress:0x13f0a9340 @address="api.github.com", @port=443>)
+STDOUT.puts context.stats # => Tomato::Stats(@version=V5, @authenticationMethods=[NoAuthentication], @command=TCPConnection, @addressType=Domain, @remoteIpAddress=nil, @remoteAddress=#<Tomato::RemoteAddress:0x13f0a9340 @address="api.github.com", @port=443>)
 ```
 
 ### Used as Shard

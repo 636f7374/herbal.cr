@@ -19,8 +19,8 @@ module Tomato
       @server
     end
 
-    def summary
-      Summary.from_socket client
+    def stats
+      Stats.from_socket client
     end
 
     def connect_server!

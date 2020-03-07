@@ -1,4 +1,4 @@
-struct Tomato::Summary
+struct Tomato::Stats
   def initialize
   end
 
@@ -27,15 +27,15 @@ struct Tomato::Summary
   end
 
   def self.from_socket(socket : Socket)
-    summary = new
+    stats = new
 
-    summary.version = socket.version
-    summary.authentication_methods = socket.authentication_methods
-    summary.command = socket.command
-    summary.address_type = socket.address_type
-    summary.remote_ip_address = socket.remote_ip_address
-    summary.remote_address = socket.remote_address
+    stats.version = socket.version
+    stats.authentication_methods = socket.authentication_methods
+    stats.command = socket.command
+    stats.address_type = socket.address_type
+    stats.remote_ip_address = socket.remote_ip_address
+    stats.remote_address = socket.remote_address
 
-    summary
+    stats
   end
 end
