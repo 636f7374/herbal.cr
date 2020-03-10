@@ -42,7 +42,7 @@ module Tomato
         remote.bind remote.local_address
         remote.listen
       when .associate_udp?
-        remote = Durian::Resolver.get_udp_socket! host, port, dnsResolver, timeout.connect
+        remote = Durian::Resolver.get_udp_socket! host, port, dnsResolver
       end
 
       self.server = remote if remote
