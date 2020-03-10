@@ -61,7 +61,7 @@ servers = [] of Tuple(Socket::IPAddress, Durian::Protocol)
 servers << Tuple.new Socket::IPAddress.new("8.8.8.8", 53_i32), Durian::Protocol::UDP
 servers << Tuple.new Socket::IPAddress.new("1.1.1.1", 53_i32), Durian::Protocol::UDP
 resolver = Durian::Resolver.new servers
-resolver.ip_cache = Durian::Resolver::Cache::IPAddress.new
+resolver.ip_cache = Durian::Cache::IPAddress.new
 
 # Tomato
 begin
@@ -103,7 +103,7 @@ servers = [] of Tuple(Socket::IPAddress, Durian::Protocol)
 servers << Tuple.new Socket::IPAddress.new("8.8.8.8", 53_i32), Durian::Protocol::UDP
 servers << Tuple.new Socket::IPAddress.new("1.1.1.1", 53_i32), Durian::Protocol::UDP
 resolver = Durian::Resolver.new servers
-resolver.ip_cache = Durian::Resolver::Cache::IPAddress.new
+resolver.ip_cache = Durian::Cache::IPAddress.new
 
 # Tomato
 tcp_server = TCPServer.new "0.0.0.0", 1234_i32
