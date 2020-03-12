@@ -93,7 +93,7 @@ client.try &.close
 require "tomato"
 
 def handle_client(context : Tomato::Context)
-  STDOUT.puts context.summary
+  STDOUT.puts context.stats
 
   context.perform
 end
