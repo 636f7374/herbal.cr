@@ -19,6 +19,30 @@ module Tomato
       @server
     end
 
+    private def upstream_finished=(value : Bool)
+      @upstreamFinished = value
+    end
+
+    private def upstream_finished?
+      @upstreamFinished
+    end
+
+    private def downstream_finished=(value : Bool)
+      @downstreamFinished = value
+    end
+
+    private def downstream_finished?
+      @downstreamFinished
+    end
+
+    private def all_closed=(value : Bool)
+      @allClosed = value
+    end
+
+    private def all_closed?
+      @allClosed
+    end
+
     def stats
       Stats.from_socket client
     end
@@ -58,24 +82,35 @@ module Tomato
     end
 
     def transport
-      transport client, server
+      all_transport client, server
     end
 
-    def transport(client, server : IO)
+    def all_transport(client, server : IO)
       channel = Channel(Bool).new
 
       spawn do
         IO.copy client, server rescue nil
-        channel.send true
+        self.upstream_finished = true
       end
 
       spawn do
         IO.copy server, client rescue nil
-        channel.send true
+        self.downstream_finished = true
       end
 
-      all_close if channel.receive
-      channel.receive
+      spawn do
+        loop do
+          break Fiber.yield if all_closed?
+
+          if upstream_finished? || downstream_finished?
+            all_close
+
+            break self.all_closed = true
+          end
+
+          Fiber.yield
+        end
+      end
     end
 
     def perform
