@@ -86,8 +86,6 @@ module Tomato
     end
 
     def all_transport(client, server : IO)
-      channel = Channel(Bool).new
-
       spawn do
         IO.copy client, server rescue nil
         self.upstream_finished = true
