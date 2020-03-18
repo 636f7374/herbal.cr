@@ -1,9 +1,9 @@
 module Tomato::Plugin::WebSocket
-  class Progress
-    property payloadLength : Int32
+  class Window
+    property all : Int32
     property remaining : Int32
 
-    def initialize(@payloadLength : Int32 = 0_i32, @remaining : Int32 = 0_i32)
+    def initialize(@all : Int32 = 0_i32, @remaining : Int32 = 0_i32)
     end
   end
 
@@ -12,11 +12,11 @@ module Tomato::Plugin::WebSocket
     alias Protocol = HTTP::WebSocket::Protocol
 
     property wrapped : Protocol
-    property progress : Progress
+    property window : Window
     property buffer : IO::Memory
 
     def initialize(@wrapped : Protocol)
-      @progress = Progress.new
+      @window = Window.new
       @buffer = IO::Memory.new
     end
 
@@ -53,8 +53,8 @@ module Tomato::Plugin::WebSocket
 
         case receive.opcode
         when Opcode::TEXT, Opcode::BINARY
-          progress.payloadLength = receive.size
-          progress.remaining = receive.size
+          window.all = receive.size
+          window.remaining = receive.size
 
           buffer.rewind ensure buffer.clear
           buffer.write receive_buffer.to_slice[0_i32, receive.size]
@@ -64,20 +64,20 @@ module Tomato::Plugin::WebSocket
       end
     end
 
-    private def update_progress
-      case {progress.payloadLength, progress.remaining}
-      when {0_i32, progress.remaining}
+    private def update_window
+      case {window.all, window.remaining}
+      when {0_i32, window.remaining}
         update_buffer
-      when {progress.payloadLength, 0_i32}
+      when {window.all, 0_i32}
         update_buffer
       end
     end
 
     def read(slice : Bytes) : Int32
-      update_progress
+      update_window
 
       length = buffer.read slice
-      progress.remaining -= length
+      window.remaining -= length
 
       length
     end

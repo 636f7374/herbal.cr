@@ -82,10 +82,10 @@ module Tomato
   end
 
   class RemoteAddress
-    property address : String
+    property host : String
     property port : Int32
 
-    def initialize(@address : String, @port : Int32)
+    def initialize(@host : String, @port : Int32)
     end
   end
 

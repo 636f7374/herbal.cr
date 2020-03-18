@@ -53,7 +53,7 @@ module Tomato
       raise UnEstablish.new unless clientEstablish
       raise UnknownFlag.new unless remote_address = client.remote_address
 
-      host = remote_address.address
+      host = remote_address.host
       port = remote_address.port
 
       case command

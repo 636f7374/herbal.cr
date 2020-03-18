@@ -262,7 +262,7 @@ module Tomato
         return unless sync_resolution
 
         begin
-          method, ip_address = Durian::Resolver.getaddrinfo! remote_address.address, remote_address.port, dnsResolver
+          method, ip_address = Durian::Resolver.getaddrinfo! remote_address.host, remote_address.port, dnsResolver
         rescue ex
           set_disconnect! version
           raise ex

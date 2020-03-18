@@ -1,9 +1,9 @@
 module Tomato::Plugin::KeepAlive
-  class Progress
-    property contentLength : Int64
+  class Window
+    property all : Int64
     property remaining : Int64
 
-    def initialize(@contentLength : Int64 = 0_i64, @remaining : Int64 = 0_i64)
+    def initialize(@all : Int64 = 0_i64, @remaining : Int64 = 0_i64)
     end
   end
 
@@ -12,12 +12,12 @@ module Tomato::Plugin::KeepAlive
     property host : String
     property method : String
     property path : String
-    property progress : Progress
+    property window : Window
 
     def initialize(@wrapped : IO, @host : String)
       @method = "GET"
       @path = "/"
-      @progress = Progress.new
+      @window = Window.new
     end
 
     def self.new(wrapped : IO, host : String, port : Int32)
@@ -53,34 +53,34 @@ module Tomato::Plugin::KeepAlive
       HTTP::Client::Response.from_io wrapped, ignore_body: true
     end
 
-    private def update_progress
+    private def update_window
       finished = false
 
-      case {progress.contentLength, progress.remaining}
-      when {0_i64, progress.remaining}
+      case {window.all, window.remaining}
+      when {0_i64, window.remaining}
         finished = true
-      when {progress.contentLength, 0_i64}
+      when {window.all, 0_i64}
         finished = true
       end
 
       return unless finished
 
       payload = from_io
-      progress.contentLength = payload.content_length
-      progress.remaining = payload.content_length
+      window.all = payload.content_length
+      window.remaining = payload.content_length
     end
 
     def read(slice : Bytes) : Int32
-      update_progress
+      update_window
 
-      length = (progress.remaining >= slice.size) ? slice.size : progress.remaining
+      length = (window.remaining >= slice.size) ? slice.size : window.remaining
 
       temporary = IO::Memory.new length
       length = IO.copy wrapped, temporary, length
       temporary.rewind
 
       length = temporary.read slice
-      progress.remaining -= length
+      window.remaining -= length
 
       length
     end
@@ -122,11 +122,11 @@ module Tomato::Plugin::KeepAlive
   class Server < IO
     property wrapped : IO
     property statusCode : Int32
-    property progress : Progress
+    property window : Window
 
     def initialize(@wrapped : IO)
       @statusCode = 200_i32
-      @progress = Progress.new
+      @window = Window.new
     end
 
     def read_timeout=(value : Int | Float | Time::Span | Nil)
@@ -153,13 +153,13 @@ module Tomato::Plugin::KeepAlive
       HTTP::Request.from_io wrapped
     end
 
-    private def update_progress
+    private def update_window
       finished = false
 
-      case {progress.contentLength, progress.remaining}
-      when {0_i64, progress.remaining}
+      case {window.all, window.remaining}
+      when {0_i64, window.remaining}
         finished = true
-      when {progress.contentLength, 0_i64}
+      when {window.all, 0_i64}
         finished = true
       end
 
@@ -168,21 +168,21 @@ module Tomato::Plugin::KeepAlive
       payload = from_io
       raise MalformedPacket.new unless payload.is_a? HTTP::Request
 
-      progress.contentLength = payload.content_length
-      progress.remaining = payload.content_length
+      window.all = payload.content_length
+      window.remaining = payload.content_length
     end
 
     def read(slice : Bytes) : Int32
-      update_progress
+      update_window
 
-      length = (progress.remaining >= slice.size) ? slice.size : progress.remaining
+      length = (window.remaining >= slice.size) ? slice.size : window.remaining
 
       temporary = IO::Memory.new length
       length = IO.copy wrapped, temporary, length
       temporary.rewind
 
       length = temporary.read slice
-      progress.remaining -= length
+      window.remaining -= length
 
       length
     end
