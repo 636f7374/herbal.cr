@@ -19,28 +19,20 @@ module Tomato
       @server
     end
 
-    private def upstream_finished=(value : Bool)
-      @upstreamFinished = value
+    private def uploaded_size=(value : UInt64)
+      @uploadedSize = value
     end
 
-    private def upstream_finished?
-      @upstreamFinished
+    private def uploaded_size
+      @uploadedSize
     end
 
-    private def downstream_finished=(value : Bool)
-      @downstreamFinished = value
+    private def received_size=(value : UInt64)
+      @receivedSize = value
     end
 
-    private def downstream_finished?
-      @downstreamFinished
-    end
-
-    private def all_closed=(value : Bool)
-      @allClosed = value
-    end
-
-    private def all_closed?
-      @allClosed
+    private def received_size
+      @receivedSize
     end
 
     def stats
@@ -87,26 +79,37 @@ module Tomato
 
     def all_transport(client, server : IO)
       spawn do
-        IO.copy client, server rescue nil
-        self.upstream_finished = true
+        length = begin
+          IO.copy client, remote, true
+        rescue ex : IO::CopyException
+          ex.count
+        rescue
+          nil
+        end
+
+        self.uploaded_size = length || 0_u64
       end
 
       spawn do
-        IO.copy server, client rescue nil
-        self.downstream_finished = true
+        length = begin
+          IO.copy remote, client, true
+        rescue ex : IO::CopyException
+          ex.count
+        rescue
+          nil
+        end
+
+        self.received_size = length || 0_u64
       end
 
       spawn do
         loop do
-          break Fiber.yield if all_closed?
-
-          if upstream_finished? || downstream_finished?
-            all_close
-
-            break self.all_closed = true
+          if uploaded_size || received_size
+            client.close rescue nil
+            break remote.close rescue nil
           end
 
-          Fiber.yield
+          sleep 1_i32.seconds
         end
       end
     end
