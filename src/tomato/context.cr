@@ -4,19 +4,19 @@ module Tomato
     getter dnsResolver : Durian::Resolver
     property timeout : TimeOut
     property clientEstablish : Bool
-    property server : IO
+    property remote : IO
 
     def initialize(@client : Socket, @dnsResolver : Durian::Resolver, @timeout : TimeOut = TimeOut.new)
       @clientEstablish = false
-      @server = Tomato.empty_io
+      @remote = Tomato.empty_io
     end
 
-    def server=(value : IO)
-      @server = value
+    def remote=(value : IO)
+      @remote = value
     end
 
-    def server
-      @server
+    def remote
+      @remote
     end
 
     private def uploaded_size=(value : UInt64)
@@ -39,8 +39,8 @@ module Tomato
       Stats.from_socket client
     end
 
-    def connect_server!
-      return unless server.is_a? IO::Memory if server
+    def connect_remote!
+      return unless remote.is_a? IO::Memory if remote
       raise UnknownFlag.new unless command = client.command
       raise UnEstablish.new unless clientEstablish
       raise UnknownFlag.new unless remote_address = client.remote_address
@@ -61,7 +61,7 @@ module Tomato
         remote = Durian::Resolver.get_udp_socket! host, port, dnsResolver
       end
 
-      self.server = remote if remote
+      self.remote = remote if remote
       remote.try &.read_timeout = timeout.read
       remote.try &.write_timeout = timeout.write
 
@@ -70,14 +70,14 @@ module Tomato
 
     def all_close
       client.close rescue nil
-      server.close rescue nil
+      remote.close rescue nil
     end
 
     def transport
-      all_transport client, server
+      all_transport client, remote
     end
 
-    def all_transport(client, server : IO)
+    def all_transport(client, remote : IO)
       spawn do
         length = begin
           IO.copy client, remote, true
@@ -116,7 +116,7 @@ module Tomato
 
     def perform
       begin
-        connect_server!
+        connect_remote!
       rescue ex
         return all_close
       end
