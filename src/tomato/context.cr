@@ -79,32 +79,62 @@ module Tomato
 
     def all_transport(client, remote : IO)
       spawn do
-        length = begin
-          IO.copy client, remote, true
-        rescue ex : IO::CopyException
-          ex.count
-        rescue
-          nil
+        exception = nil
+        count = 0_u64
+
+        loop do
+          size = begin
+            IO.copy client, remote, true
+          rescue ex : IO::CopyException
+            exception = ex.cause
+            ex.count
+          rescue
+            nil
+          end
+
+          size.try { |_size| count += _size }
+
+          if exception && count.try &.zero?
+            break unless exception.is_a? IO::Timeout
+            next unless received_size
+          end
+
+          break
         end
 
-        self.uploaded_size = length || 0_u64
+        self.uploaded_size = count || 0_u64
       end
 
       spawn do
-        length = begin
-          IO.copy remote, client, true
-        rescue ex : IO::CopyException
-          ex.count
-        rescue
-          nil
+        exception = nil
+        count = 0_u64
+
+        loop do
+          size = begin
+            IO.copy remote, client, true
+          rescue ex : IO::CopyException
+            exception = ex.cause
+            ex.count
+          rescue
+            nil
+          end
+
+          size.try { |_size| count += _size }
+
+          if exception && count.try &.zero?
+            break unless exception.is_a? IO::Timeout
+            next unless uploaded_size
+          end
+
+          break
         end
 
-        self.received_size = length || 0_u64
+        self.received_size = count || 0_u64
       end
 
       spawn do
         loop do
-          if uploaded_size || received_size
+          if uploaded_size && received_size
             client.close rescue nil
             break remote.close rescue nil
           end
