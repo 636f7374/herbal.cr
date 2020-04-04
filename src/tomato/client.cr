@@ -174,7 +174,6 @@ module Tomato
         # https://en.wikipedia.org/wiki/SOCKS
 
         memory.write Bytes[1_i32]
-        memory.write Bytes[_version.to_i]
 
         memory.write Bytes[auth.userName.size]
         memory.write auth.userName.to_slice
@@ -186,10 +185,16 @@ module Tomato
         socket.write memory.to_slice
         socket.flush
 
-        raise MalformedPacket.new unless _get_version = Tomato.get_version socket
-        raise MismatchFlag.new if _get_version != _version
+        # 0x01 For Current version of UserName / Password Authentication
+        # https://en.wikipedia.org/wiki/SOCKS
+
+        buffer = uninitialized UInt8[1_i32]
+        length = read buffer.to_slice
+        raise MalformedPacket.new if length.zero?
+        raise MalformedPacket.new if 1_u8 != buffer.to_slice[0_i32]
+
         raise MalformedPacket.new unless verify = Tomato.get_verify socket
-        raise AuthenticationFailed.new if verify.deny?
+        raise AuthenticationFailed.new unless verify.pass?
       end
     end
 

@@ -173,6 +173,8 @@ module Tomato::Plugin::KeepAlive
     end
 
     def read(slice : Bytes) : Int32
+      return 0_i32 if slice.empty?
+
       update_window
 
       length = (window.remaining >= slice.size) ? slice.size : window.remaining
