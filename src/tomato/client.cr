@@ -34,7 +34,7 @@ module Tomato
       new wrapped, dnsResolver
     end
 
-    def on_auth=(value : SimpleAuth)
+    def on_auth=(value : AuthenticationEntry)
       @onAuth = value
     end
 
@@ -178,8 +178,10 @@ module Tomato
 
         memory.write Bytes[auth.userName.size]
         memory.write auth.userName.to_slice
-        memory.write Bytes[auth.password.size]
-        memory.write auth.password.to_slice
+
+        auth_password = auth.password
+        memory.write Bytes[auth_password.try &.size || 0_i32]
+        memory.write auth_password.to_slice if auth_password
 
         socket.write memory.to_slice
         socket.flush
