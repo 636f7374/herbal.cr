@@ -10,6 +10,11 @@ resolver.ip_cache = Durian::Cache::IPAddress.new
 # Tomato
 begin
   client = Tomato::Client.new "0.0.0.0", 1234_i32, resolver
+
+  # Authentication (Optional)
+  # client.authentication_methods = [Tomato::Authentication::NoAuthentication, Tomato::Authentication::UserNamePassword]
+  # client.on_auth = Tomato::AuthenticationEntry.new "admin", "abc123"
+
   client.connect! "www.example.com", 80_i32, Tomato::Command::TCPConnection, true
 
   # Write Payload
