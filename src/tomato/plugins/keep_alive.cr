@@ -44,11 +44,6 @@ module Tomato::Plugin::KeepAlive
       _wrapped.write_timeout if _wrapped.responds_to? :write_timeout
     end
 
-    def all_free
-      _wrapped = wrapped
-      _wrapped.all_free if _wrapped.responds_to? :all_free
-    end
-
     private def from_io
       HTTP::Client::Response.from_io wrapped, ignore_body: true
     end
@@ -101,7 +96,7 @@ module Tomato::Plugin::KeepAlive
 
     def write_payload(value : String)
       payload = HTTP::Request.new method, path, body: value
-      payload.keep_alive = true
+      payload.header_keep_alive = true
       payload.header_host = host
       payload.to_io wrapped
     end
@@ -205,7 +200,7 @@ module Tomato::Plugin::KeepAlive
 
     def write_payload(value : String)
       payload = HTTP::Client::Response.new statusCode, body: value
-      payload.keep_alive = true
+      payload.header_keep_alive = true
       payload.to_io wrapped
     end
 

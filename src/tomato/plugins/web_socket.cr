@@ -40,11 +40,6 @@ module Tomato::Plugin::WebSocket
       _wrapped.write_timeout if _wrapped.responds_to? :write_timeout
     end
 
-    def all_free
-      _wrapped = wrapped
-      _wrapped.all_free if _wrapped.responds_to? :all_free
-    end
-
     private def update_buffer
       receive_buffer = uninitialized UInt8[4096_i32]
 
@@ -60,6 +55,10 @@ module Tomato::Plugin::WebSocket
           buffer.write receive_buffer.to_slice[0_i32, receive.size]
 
           break buffer.rewind
+        when Opcode::CLOSE
+          buffer.close
+
+          break wrapped.close
         end
       end
     end
@@ -99,7 +98,7 @@ module Tomato::Plugin::WebSocket
     end
 
     def close
-      wrapped.io_close
+      wrapped.close
     end
 
     def closed?
