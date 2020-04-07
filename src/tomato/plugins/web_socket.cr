@@ -55,10 +55,6 @@ module Tomato::Plugin::WebSocket
           buffer.write receive_buffer.to_slice[0_i32, receive.size]
 
           break buffer.rewind
-        when Opcode::CLOSE
-          buffer.close
-
-          break wrapped.close
         end
       end
     end
@@ -98,7 +94,7 @@ module Tomato::Plugin::WebSocket
     end
 
     def close
-      wrapped.close
+      wrapped.io_close
     end
 
     def closed?
