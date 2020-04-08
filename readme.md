@@ -17,7 +17,7 @@
 
 ## Description
 
-* I saw the design of `wontruefree` and `kostya`, But it is not ideal / meets the requirements.
+* I saw some designs, But it is not ideal / meets the requirements.
   * [wontruefree / socks](https://github.com/wontruefree/socks)
   * [kostya / socks](https://github.com/kostya/socks)
 * After a day of conception / thinking, a day of design / debugging, `Tomato.cr` has been initially completed.
