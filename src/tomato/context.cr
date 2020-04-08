@@ -112,9 +112,13 @@ module Tomato
 
           size.try { |_size| count += _size }
           break if maximum_timed_out <= timed_out_counter
-          break unless exception.is_a? IO::TimeoutError if exception
-          timed_out_counter += 1_i32
-          next sleep 0.05_f32.seconds unless received_size if exception
+
+          case exception
+          when IO::TimeoutError
+            timed_out_counter += 1_i32
+            next sleep 0.05_f32.seconds unless received_size
+          else
+          end
 
           break
         end
@@ -139,9 +143,13 @@ module Tomato
 
           size.try { |_size| count += _size }
           break if maximum_timed_out <= timed_out_counter
-          break unless exception.is_a? IO::TimeoutError if exception
-          timed_out_counter += 1_i32
-          next sleep 0.05_f32.seconds unless uploaded_size if exception
+
+          case exception
+          when IO::TimeoutError
+            timed_out_counter += 1_i32
+            next sleep 0.05_f32.seconds unless uploaded_size
+          else
+          end
 
           break
         end
@@ -151,7 +159,7 @@ module Tomato
 
       spawn do
         loop do
-          if uploaded_size && received_size
+          if uploaded_size || received_size
             client.close rescue nil
             break remote.close rescue nil
           end
