@@ -172,7 +172,7 @@ $ make test
 
 ## Credit
 
-* [\_Icon::wanicon/fruits](https://www.flaticon.com/packs/fruits-and-vegetables-48)
+* [\_Icon::Wanicon/Drink](https://www.flaticon.com/free-icon/herbal_1640397)
 
 ## Contributors
 
