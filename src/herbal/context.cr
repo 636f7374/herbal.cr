@@ -1,4 +1,4 @@
-module Tomato
+module Herbal
   class Context
     getter client : Socket
     getter dnsResolver : Durian::Resolver
@@ -8,7 +8,7 @@ module Tomato
 
     def initialize(@client : Socket, @dnsResolver : Durian::Resolver, @timeout : TimeOut = TimeOut.new)
       @clientEstablish = false
-      @remote = Tomato.empty_io
+      @remote = Herbal.empty_io
     end
 
     def remote=(value : IO)

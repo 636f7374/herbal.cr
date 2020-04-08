@@ -1,4 +1,4 @@
-module Tomato
+module Herbal
   class Client < IO
     getter dnsResolver : Durian::Resolver
     property wrapped : IO
@@ -125,7 +125,7 @@ module Tomato
 
       case remote_resolution
       when true
-        ip_address = Tomato.to_ip_address host, port
+        ip_address = Herbal.to_ip_address host, port
 
         case ip_address
         when ::Socket::IPAddress
@@ -158,10 +158,10 @@ module Tomato
 
     private def auth_challenge(socket : IO)
       raise UnknownFlag.new unless _version = version
-      raise MalformedPacket.new unless _get_version = Tomato.get_version socket
+      raise MalformedPacket.new unless _get_version = Herbal.get_version socket
       raise MismatchFlag.new if _get_version != _version
 
-      raise MalformedPacket.new unless _method = Tomato.get_authentication socket
+      raise MalformedPacket.new unless _method = Herbal.get_authentication socket
       raise MalformedPacket.new unless authentication_methods.includes? _method
 
       memory = IO::Memory.new
@@ -193,7 +193,7 @@ module Tomato
         raise MalformedPacket.new if length.zero?
         raise MalformedPacket.new if 1_u8 != buffer.to_slice[0_i32]
 
-        raise MalformedPacket.new unless verify = Tomato.get_verify socket
+        raise MalformedPacket.new unless verify = Herbal.get_verify socket
         raise AuthenticationFailed.new unless verify.pass?
       end
     end
@@ -217,7 +217,7 @@ module Tomato
 
     private def process(socket, ip_address, command : Command)
       raise UnknownFlag.new unless _version = version
-      address_type = Tomato.to_address_type ip_address
+      address_type = Herbal.to_address_type ip_address
 
       memory = IO::Memory.new
       memory.write Bytes[_version.to_i]
@@ -227,9 +227,9 @@ module Tomato
 
       case ip_address.family
       when .inet?
-        memory.write Tomato.ipv4_address_to_bytes ip_address
+        memory.write Herbal.ipv4_address_to_bytes ip_address
       when .inet6?
-        unless ipv6_address = Tomato.ipv6_address_to_bytes ip_address
+        unless ipv6_address = Herbal.ipv6_address_to_bytes ip_address
           raise MalformedPacket.new "Invalid Ipv6 Address"
         end
 
@@ -244,17 +244,17 @@ module Tomato
 
     private def establish(socket : IO)
       raise UnknownFlag.new unless _version = version
-      raise MalformedPacket.new unless _get_version = Tomato.get_version socket
+      raise MalformedPacket.new unless _get_version = Herbal.get_version socket
       raise MismatchFlag.new if _get_version != _version
 
-      raise MalformedPacket.new unless _get_status = Tomato.get_status socket
+      raise MalformedPacket.new unless _get_status = Herbal.get_status socket
       raise ConnectionDenied.new unless _get_status.indicates_success?
-      raise MalformedPacket.new unless reserved = Tomato.get_reserved socket
+      raise MalformedPacket.new unless reserved = Herbal.get_reserved socket
 
-      raise MalformedPacket.new unless address_type = Tomato.get_address socket
+      raise MalformedPacket.new unless address_type = Herbal.get_address socket
       raise MalformedPacket.new if address_type.domain?
 
-      Tomato.extract_ip_address address_type, socket
+      Herbal.extract_ip_address address_type, socket
     end
   end
 end

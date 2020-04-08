@@ -1,4 +1,4 @@
-struct Tomato::Stats
+struct Herbal::Stats
   def initialize
   end
 

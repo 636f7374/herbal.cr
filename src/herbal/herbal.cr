@@ -1,4 +1,4 @@
-module Tomato
+module Herbal
   enum Authentication : UInt8
     NoAuthentication = 0_u8
     GSSAPI           = 1_u8
@@ -224,7 +224,7 @@ module Tomato
   def self.extract_ip_address(address_type : Address, io : IO) : ::Socket::IPAddress?
     case address_type
     when .ipv6?
-      return unless ip_address = Tomato.decode_ipv6_address io
+      return unless ip_address = Herbal.decode_ipv6_address io
 
       port = io.read_bytes UInt16, IO::ByteFormat::BigEndian rescue nil
       return unless _port = port

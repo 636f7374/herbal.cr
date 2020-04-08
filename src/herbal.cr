@@ -3,5 +3,5 @@ require "durian"
 require "socket"
 require "http"
 
-require "./tomato/plugins/*"
-require "./tomato/*"
+require "./herbal/plugins/*"
+require "./herbal/*"

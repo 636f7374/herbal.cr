@@ -1,18 +1,18 @@
 <div align = "center"><img src="images/icon.png" width="256" height="256" /></div>
 
 <div align = "center">
-  <h1>Tomato.cr - SOCKS5 Client and Server</h1>
+  <h1>Herbal.cr - SOCKS5 Client and Server</h1>
 </div>
 
 <p align="center">
   <a href="https://crystal-lang.org">
     <img src="https://img.shields.io/badge/built%20with-crystal-000000.svg" /></a>
-  <a href="https://travis-ci.org/636f7374/tomato.cr">
-    <img src="https://api.travis-ci.org/636f7374/tomato.cr.svg" /></a>
-  <a href="https://github.com/636f7374/tomato.cr/releases">
-    <img src="https://img.shields.io/github/release/636f7374/tomato.cr.svg" /></a>
-  <a href="https://github.com/636f7374/tomato.cr/blob/master/license">
-    <img src="https://img.shields.io/github/license/636f7374/tomato.cr.svg"></a>
+  <a href="https://travis-ci.org/636f7374/herbal.cr">
+    <img src="https://api.travis-ci.org/636f7374/herbal.cr.svg" /></a>
+  <a href="https://github.com/636f7374/herbal.cr/releases">
+    <img src="https://img.shields.io/github/release/636f7374/herbal.cr.svg" /></a>
+  <a href="https://github.com/636f7374/herbal.cr/blob/master/license">
+    <img src="https://img.shields.io/github/license/636f7374/herbal.cr.svg"></a>
 </p>
 
 ## Description
@@ -20,7 +20,7 @@
 * I saw some designs, But it is not ideal / meets the requirements.
   * [wontruefree / socks](https://github.com/wontruefree/socks)
   * [kostya / socks](https://github.com/kostya/socks)
-* After a day of conception / thinking, a day of design / debugging, `Tomato.cr` has been initially completed.
+* After a day of conception / thinking, a day of design / debugging, `Herbal.cr` has been initially completed.
   * I reference to [RFC1928](https://tools.ietf.org/html/rfc1928) and some guidelines for design, actually SOCKS5 is not difficult.
   * Third-party guides are more effective and practical, and has been verified by Wireshark test.
 * Due to time constraints, Travis-CI and Spec tests have not been added for the time being.
@@ -47,14 +47,14 @@
 
 * Does not support [Generic Security Services Application Program Interface](https://en.wikipedia.org/wiki/Generic_Security_Services_Application_Program_Interface) authentication.
 * Does not support SOCKS4 and SOCKS4A Protocols.
-* Why is it named `Tomato.cr`? it's just random six-word English words.
+* Why is it named `Herbal.cr`? it's just random six-word English words.
 
 ## Usage
 
 * Simple Client
 
 ```crystal
-require "tomato"
+require "herbal"
 
 # Durian
 servers = [] of Tuple(Socket::IPAddress, Durian::Protocol)
@@ -63,15 +63,15 @@ servers << Tuple.new Socket::IPAddress.new("1.1.1.1", 53_i32), Durian::Protocol:
 resolver = Durian::Resolver.new servers
 resolver.ip_cache = Durian::Cache::IPAddress.new
 
-# Tomato
+# Herbal
 begin
-  client = Tomato::Client.new "0.0.0.0", 1234_i32, resolver
+  client = Herbal::Client.new "0.0.0.0", 1234_i32, resolver
 
   # Authentication (Optional)
-  # client.authentication_methods = [Tomato::Authentication::NoAuthentication, Tomato::Authentication::UserNamePassword]
-  # client.on_auth = Tomato::AuthenticationEntry.new "admin", "abc123"
+  # client.authentication_methods = [Herbal::Authentication::NoAuthentication, Herbal::Authentication::UserNamePassword]
+  # client.on_auth = Herbal::AuthenticationEntry.new "admin", "abc123"
 
-  client.connect! "www.example.com", 80_i32, Tomato::Command::TCPConnection, true
+  client.connect! "www.example.com", 80_i32, Herbal::Command::TCPConnection, true
 
   # Write Payload
   memory = IO::Memory.new
@@ -95,9 +95,9 @@ client.try &.close
 * Simple Server
 
 ```crystal
-require "tomato"
+require "herbal"
 
-def handle_client(context : Tomato::Context)
+def handle_client(context : Herbal::Context)
   STDOUT.puts context.stats
 
   context.perform
@@ -110,26 +110,26 @@ servers << Tuple.new Socket::IPAddress.new("1.1.1.1", 53_i32), Durian::Protocol:
 resolver = Durian::Resolver.new servers
 resolver.ip_cache = Durian::Cache::IPAddress.new
 
-# Tomato
+# Herbal
 tcp_server = TCPServer.new "0.0.0.0", 1234_i32
-tomato = Tomato::Server.new tcp_server, resolver
-tomato.authentication = Tomato::Authentication::NoAuthentication
-tomato.client_timeout = Tomato::TimeOut.new
-tomato.remote_timeout = Tomato::TimeOut.new
+herbal = Herbal::Server.new tcp_server, resolver
+herbal.authentication = Herbal::Authentication::NoAuthentication
+herbal.client_timeout = Herbal::TimeOut.new
+herbal.remote_timeout = Herbal::TimeOut.new
 
 # Authentication (Optional)
-# tomato.authentication = Tomato::Authentication::UserNamePassword
-# tomato.on_auth = ->(user_name : String, password : String?) do
+# herbal.authentication = Herbal::Authentication::UserNamePassword
+# herbal.on_auth = ->(user_name : String, password : String?) do
 #  STDOUT.puts [user_name, password]
-#  Tomato::Verify::Pass
+#  Herbal::Verify::Pass
 # end
 
 loop do
-  socket = tomato.accept?
+  socket = herbal.accept?
 
   spawn do
     next unless client = socket
-    next unless context = tomato.upgrade client
+    next unless context = herbal.upgrade client
 
     handle_client context
   end
@@ -137,7 +137,7 @@ end
 ```
 
 ```crystal
-STDOUT.puts context.stats # => Tomato::Stats(@version=V5, @authenticationMethods=[NoAuthentication], @command=TCPConnection, @addressType=Domain, @remoteIpAddress=nil, @remoteAddress=#<Tomato::RemoteAddress:0x13f0a9340 @address="api.github.com", @port=443>)
+STDOUT.puts context.stats # => Herbal::Stats(@version=V5, @authenticationMethods=[NoAuthentication], @command=TCPConnection, @addressType=Domain, @remoteIpAddress=nil, @remoteAddress=#<Herbal::RemoteAddress:0x13f0a9340 @address="api.github.com", @port=443>)
 ```
 
 ### Used as Shard
@@ -145,14 +145,14 @@ STDOUT.puts context.stats # => Tomato::Stats(@version=V5, @authenticationMethods
 Add this to your application's shard.yml:
 ```yaml
 dependencies:
-  tomato:
-    github: 636f7374/tomato.cr
+  herbal:
+    github: 636f7374/herbal.cr
 ```
 
 ### Installation
 
 ```bash
-$ git clone https://github.com/636f7374/tomato.cr.git
+$ git clone https://github.com/636f7374/herbal.cr.git
 ```
 
 ## Development

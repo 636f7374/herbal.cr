@@ -1,4 +1,4 @@
-module Tomato
+module Herbal
   class Server
     getter wrapped : ::Socket::Server
     getter dnsResolver : Durian::Resolver
@@ -14,7 +14,7 @@ module Tomato
       @authentication || Authentication::NoAuthentication
     end
 
-    def on_auth=(value : Proc(String, String?, Tomato::Verify))
+    def on_auth=(value : Proc(String, String?, Herbal::Verify))
       @onAuth = value
     end
 

@@ -1,4 +1,4 @@
-module Tomato::Plugin::KeepAlive
+module Herbal::Plugin::KeepAlive
   class Window
     property all : Int64
     property remaining : Int64

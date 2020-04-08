@@ -1,5 +1,5 @@
-name: tomato
-version: 0.1.0
+name: herbal
+version: 0.1.1
 
 dependencies:
   papaya:

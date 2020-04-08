@@ -1,4 +1,4 @@
-module Tomato::Plugin::WebSocket
+module Herbal::Plugin::WebSocket
   class Window
     property all : Int32
     property remaining : Int32

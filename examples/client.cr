@@ -1,4 +1,4 @@
-require "../src/tomato.cr"
+require "../src/herbal.cr"
 
 # Durian
 servers = [] of Tuple(Socket::IPAddress, Durian::Protocol)
@@ -7,15 +7,15 @@ servers << Tuple.new Socket::IPAddress.new("1.1.1.1", 53_i32), Durian::Protocol:
 resolver = Durian::Resolver.new servers
 resolver.ip_cache = Durian::Cache::IPAddress.new
 
-# Tomato
+# Herbal
 begin
-  client = Tomato::Client.new "0.0.0.0", 1234_i32, resolver
+  client = Herbal::Client.new "0.0.0.0", 1234_i32, resolver
 
   # Authentication (Optional)
-  # client.authentication_methods = [Tomato::Authentication::NoAuthentication, Tomato::Authentication::UserNamePassword]
-  # client.on_auth = Tomato::AuthenticationEntry.new "admin", "abc123"
+  # client.authentication_methods = [Herbal::Authentication::NoAuthentication, Herbal::Authentication::UserNamePassword]
+  # client.on_auth = Herbal::AuthenticationEntry.new "admin", "abc123"
 
-  client.connect! "www.example.com", 80_i32, Tomato::Command::TCPConnection, true
+  client.connect! "www.example.com", 80_i32, Herbal::Command::TCPConnection, true
 
   # Write Payload
   memory = IO::Memory.new

@@ -1,4 +1,4 @@
-module Tomato
+module Herbal
   class Socket < IO
     getter dnsResolver : Durian::Resolver
     property wrapped : IO
@@ -30,7 +30,7 @@ module Tomato
       @authentication || Authentication::NoAuthentication
     end
 
-    def on_auth=(value : Proc(String, String?, Tomato::Verify))
+    def on_auth=(value : Proc(String, String?, Herbal::Verify))
       @onAuth = value
     end
 
@@ -46,7 +46,7 @@ module Tomato
       @command
     end
 
-    def address_type=(value : Tomato::Address)
+    def address_type=(value : Herbal::Address)
       @addressType = value
     end
 
@@ -168,8 +168,8 @@ module Tomato
         return Verify::Deny if 1_u8 != buffer.to_slice[0_i32]
 
         # Password / UserName
-        return Verify::Deny unless username = Tomato.get_username self
-        password = Tomato.get_password self
+        return Verify::Deny unless username = Herbal.get_username self
+        password = Herbal.get_password self
 
         # SimpleAuth Callback
         call = on_auth.try &.call username, password
@@ -196,11 +196,11 @@ module Tomato
       buffer = uninitialized UInt8[1_i32]
 
       # Version
-      raise MalformedPacket.new unless _version = Tomato.get_version self
+      raise MalformedPacket.new unless _version = Herbal.get_version self
       self.version = _version
 
       # Optional
-      raise MalformedPacket.new unless optional = Tomato.get_optional self
+      raise MalformedPacket.new unless optional = Herbal.get_optional self
 
       # Methods
       authentication_methods = [] of Authentication
@@ -221,17 +221,17 @@ module Tomato
     end
 
     def process!(sync_resolution : Bool = false)
-      raise MalformedPacket.new unless version = Tomato.get_version self
-      raise MalformedPacket.new unless command = Tomato.get_command self
-      raise MalformedPacket.new unless reserved = Tomato.get_reserved self
-      raise MalformedPacket.new unless address = Tomato.get_address self
+      raise MalformedPacket.new unless version = Herbal.get_version self
+      raise MalformedPacket.new unless command = Herbal.get_command self
+      raise MalformedPacket.new unless reserved = Herbal.get_reserved self
+      raise MalformedPacket.new unless address = Herbal.get_address self
 
       self.command = command
       self.address_type = address
 
       case address
       when .ipv6?
-        ip_address = Tomato.extract_ip_address address, self
+        ip_address = Herbal.extract_ip_address address, self
 
         unless ip_address
           set_disconnect! version
@@ -241,7 +241,7 @@ module Tomato
         self.remote_address = RemoteAddress.new ip_address.address, ip_address.port
         self.remote_ip_address = ip_address
       when .ipv4?
-        ip_address = Tomato.extract_ip_address address, self
+        ip_address = Herbal.extract_ip_address address, self
 
         unless ip_address
           set_disconnect! version
@@ -251,7 +251,7 @@ module Tomato
         self.remote_address = RemoteAddress.new ip_address.address, ip_address.port
         self.remote_ip_address = ip_address
       when .domain?
-        remote_address = Tomato.extract_domain self
+        remote_address = Herbal.extract_domain self
 
         unless remote_address
           set_disconnect! version
@@ -277,7 +277,7 @@ module Tomato
       raise UnknownFlag.new unless _address_type = address_type
 
       ip_address = remote_ip_address
-      ip_address = Tomato.unspecified_ip_address if _address_type.domain? unless sync_resolution
+      ip_address = Herbal.unspecified_ip_address if _address_type.domain? unless sync_resolution
       raise UnknownFlag.new unless ip_address
 
       memory = IO::Memory.new
@@ -288,10 +288,10 @@ module Tomato
       case _address_type
       when .ipv4?
         memory.write Bytes[_address_type.to_i]
-        memory.write Tomato.ipv4_address_to_bytes ip_address
+        memory.write Herbal.ipv4_address_to_bytes ip_address
         memory.write_bytes ip_address.port.to_u16, IO::ByteFormat::BigEndian
       when .ipv6?
-        unless ipv6_address = Tomato.ipv6_address_to_bytes ip_address
+        unless ipv6_address = Herbal.ipv6_address_to_bytes ip_address
           raise MalformedPacket.new "Invalid Ipv6 Address"
         end
 
@@ -301,14 +301,14 @@ module Tomato
       when .domain?
         case ip_address.family
         when .inet?
-          memory.write Bytes[Tomato::Address::Ipv4.to_i]
-          memory.write Tomato.ipv4_address_to_bytes ip_address
+          memory.write Bytes[Herbal::Address::Ipv4.to_i]
+          memory.write Herbal.ipv4_address_to_bytes ip_address
         when .inet6?
-          unless ipv6_address = Tomato.ipv6_address_to_bytes ip_address
+          unless ipv6_address = Herbal.ipv6_address_to_bytes ip_address
             raise MalformedPacket.new "Invalid Ipv6 Address"
           end
 
-          memory.write Bytes[Tomato::Address::Ipv6.to_i]
+          memory.write Bytes[Herbal::Address::Ipv6.to_i]
           memory.write ipv6_address
         end
 
