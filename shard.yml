@@ -2,8 +2,8 @@ name: herbal
 version: 0.1.1
 
 dependencies:
-  papaya:
-    github: 64726f70/papaya.cr
+  wrench:
+    github: 64726f70/wrench.cr
   durian:
     github: 636f7374/durian.cr
 
