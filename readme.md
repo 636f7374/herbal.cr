@@ -173,6 +173,7 @@ $ make test
 ## Credit
 
 * [\_Icon::Wanicon/Drink](https://www.flaticon.com/free-icon/herbal_1640397)
+* [\_Icon::Freepik/Communication](https://www.flaticon.com/packs/communication-196)
 
 ## Contributors
 
