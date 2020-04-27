@@ -139,12 +139,17 @@ module Herbal
     pointer = ip_address.to_unsafe.as LibC::SockaddrIn6*
     memory = IO::Memory.new 16_i32
 
-    {% if flag? :darwin %}
+    {% if flag?(:darwin) || flag?(:openbsd) || flag?(:freebsd) %}
       ipv6_address = pointer.value.sin6_addr.__u6_addr.__u6_addr8
       memory.write ipv6_address.to_slice
-    {% else %}
+    {% elsif flag?(:linux) && flag?(:musl) %}
+      ipv6_address = pointer.value.sin6_addr.__in6_union.__s6_addr
+      memory.write ipv6_address.to_slice
+    {% elsif flag?(:linux) %}
       ipv6_address = pointer.value.sin6_addr.__in6_u.__u6_addr8
       memory.write ipv6_address.to_slice
+    {% else %}
+      return
     {% end %}
 
     memory.to_slice
