@@ -39,7 +39,6 @@ class Herbal::Context
       remote.reuse_address = true
       remote.reuse_port = true
       remote.bind remote.local_address
-      remote.listen
     when .associate_udp?
       remote = Durian::Resolver.get_udp_socket! host, port, dnsResolver
     end

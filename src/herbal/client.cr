@@ -119,22 +119,21 @@ class Herbal::Client < IO
   end
 
   def connect!(socket : IO, host : String, port : Int32, command : Command? = nil, remote_resolution : Bool = false)
+    _command = command || Command::TCPConnection
+
     handshake socket
     auth_challenge socket
 
-    case remote_resolution
-    when true
-      ip_address = Herbal.to_ip_address host, port
-
-      case ip_address
+    if remote_resolution
+      case ip_address = Herbal.to_ip_address host, port
       when ::Socket::IPAddress
-        process socket, ip_address, command || Command::TCPConnection
+        process socket, ip_address, _command
       else
-        process socket, host, port, command || Command::TCPConnection
+        process socket, host, port, _command
       end
-    when false
+    else
       method, ip_address = Durian::Resolver.getaddrinfo! host, port, dnsResolver
-      process socket, ip_address, command || Command::TCPConnection
+      process socket, ip_address, _command
     end
 
     establish socket
