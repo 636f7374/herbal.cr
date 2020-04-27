@@ -64,6 +64,9 @@ module Herbal
   class ConnectionDenied < Exception
   end
 
+  class BadRemoteAddress < Exception
+  end
+
   class AuthenticationEntry
     property userName : String
     property password : String?

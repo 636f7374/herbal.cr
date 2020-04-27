@@ -52,6 +52,7 @@ class Herbal::Server
     # Process
     begin
       socket.process! sync_resolution
+      raise BadRemoteAddress.new if socket.bad_remote_address?
     rescue ex
       socket.close
 

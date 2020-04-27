@@ -73,6 +73,20 @@ class Herbal::Socket < IO
     Stats.from_socket self
   end
 
+  def loopback_unspecified? : Bool
+    return false unless _remote_ip_address = remote_ip_address
+    return true if _remote_ip_address.loopback? || _remote_ip_address.unspecified?
+
+    false
+  end
+
+  def bad_remote_address?
+    return false unless _remote_address = remote_address
+    return true if loopback_unspecified? && _remote_address.port.zero?
+
+    false
+  end
+
   def read_timeout=(value : Int | Float | Time::Span | Nil)
     _wrapped = wrapped
 
