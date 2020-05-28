@@ -47,7 +47,6 @@
 
 * Does not support [Generic Security Services Application Program Interface](https://en.wikipedia.org/wiki/Generic_Security_Services_Application_Program_Interface) authentication.
 * Does not support SOCKS4 and SOCKS4A Protocols.
-* Why is it named `Herbal.cr`? it's just random six-word English words.
 
 ## Usage
 
