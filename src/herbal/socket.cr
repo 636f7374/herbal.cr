@@ -153,7 +153,7 @@ class Herbal::Socket < IO
     wrapped.closed?
   end
 
-  def auth_challenge : Verify
+  def auth_challenge! : Verify
     return Verify::Deny unless _version = version
     return Verify::Deny unless _methods = authentication_methods
 
@@ -181,8 +181,8 @@ class Herbal::Socket < IO
       return Verify::Deny if 1_u8 != buffer.to_slice[0_i32]
 
       # Password / UserName
-      return Verify::Deny unless username = Herbal.get_username self
-      password = Herbal.get_password self
+      return Verify::Deny unless username = Herbal.get_username! self
+      password = Herbal.get_password! self
 
       # SimpleAuth Callback
       call = on_auth.try &.call username, password
@@ -209,11 +209,11 @@ class Herbal::Socket < IO
     buffer = uninitialized UInt8[1_i32]
 
     # Version
-    raise MalformedPacket.new unless _version = Herbal.get_version self
+    raise MalformedPacket.new unless _version = Herbal.get_version! self
     self.version = _version
 
     # Optional
-    raise MalformedPacket.new unless optional = Herbal.get_optional self
+    raise MalformedPacket.new unless optional = Herbal.get_optional! self
 
     # Methods
     authentication_methods = [] of Authentication
@@ -230,21 +230,21 @@ class Herbal::Socket < IO
     self.authentication_methods = authentication_methods
 
     # Authentication
-    auth_challenge
+    auth_challenge!
   end
 
   def process!(sync_resolution : Bool = false)
-    raise MalformedPacket.new unless version = Herbal.get_version self
-    raise MalformedPacket.new unless command = Herbal.get_command self
-    raise MalformedPacket.new unless reserved = Herbal.get_reserved self
-    raise MalformedPacket.new unless address = Herbal.get_address self
+    raise MalformedPacket.new unless version = Herbal.get_version! self
+    raise MalformedPacket.new unless command = Herbal.get_command! self
+    raise MalformedPacket.new unless reserved = Herbal.get_reserved! self
+    raise MalformedPacket.new unless address = Herbal.get_address! self
 
     self.command = command
     self.address_type = address
 
     case address
     when .ipv6?
-      ip_address = Herbal.extract_ip_address address, self
+      ip_address = Herbal.extract_ip_address! address, self
 
       unless ip_address
         set_disconnect! version
@@ -254,7 +254,7 @@ class Herbal::Socket < IO
       self.remote_address = RemoteAddress.new ip_address.address, ip_address.port
       self.remote_ip_address = ip_address
     when .ipv4?
-      ip_address = Herbal.extract_ip_address address, self
+      ip_address = Herbal.extract_ip_address! address, self
 
       unless ip_address
         set_disconnect! version
@@ -264,7 +264,7 @@ class Herbal::Socket < IO
       self.remote_address = RemoteAddress.new ip_address.address, ip_address.port
       self.remote_ip_address = ip_address
     when .domain?
-      remote_address = Herbal.extract_domain self
+      remote_address = Herbal.extract_domain! self
 
       unless remote_address
         set_disconnect! version

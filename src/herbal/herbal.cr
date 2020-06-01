@@ -103,9 +103,9 @@ module Herbal
     ::Socket::IPAddress.new host, port rescue nil
   end
 
-  def self.get_optional(io : IO) : Int32?
+  def self.get_optional!(io : IO) : Int32?
     buffer = uninitialized UInt8[1_i32]
-    length = io.read buffer.to_slice rescue nil
+    length = io.read buffer.to_slice
 
     return unless _length = length
     return if _length.zero?
@@ -208,55 +208,55 @@ module Herbal
     address
   end
 
-  def self.extract_domain(io : IO) : RemoteAddress?
+  def self.extract_domain!(io : IO) : RemoteAddress?
     buffer = uninitialized UInt8[1_i32]
-    length = io.read buffer.to_slice rescue nil
+    length = io.read buffer.to_slice
 
     return unless length
     return if length.zero?
 
     length = buffer.to_slice[0_i32]
     memory = IO::Memory.new length
-    length = IO.copy io, memory, length rescue nil
+    length = IO.copy io, memory, length
 
     return unless length
     return if length.zero?
 
     domain = String.new memory.to_slice
-    port = io.read_bytes UInt16, IO::ByteFormat::BigEndian rescue nil
+    port = io.read_bytes UInt16, IO::ByteFormat::BigEndian
     return unless _port = port
 
     RemoteAddress.new domain, port.to_i32
   end
 
-  def self.extract_ip_address(address_type : Address, io : IO) : ::Socket::IPAddress?
+  def self.extract_ip_address!(address_type : Address, io : IO) : ::Socket::IPAddress?
     case address_type
     when .ipv6?
       return unless ip_address = Herbal.decode_ipv6_address io
 
-      port = io.read_bytes UInt16, IO::ByteFormat::BigEndian rescue nil
+      port = io.read_bytes UInt16, IO::ByteFormat::BigEndian
       return unless _port = port
 
-      ::Socket::IPAddress.new ip_address, _port.to_i32 rescue nil
+      ::Socket::IPAddress.new ip_address, _port.to_i32
     when .ipv4?
       ipv4_buffer = uninitialized UInt8[4_i32]
-      length = io.read ipv4_buffer.to_slice rescue nil
+      length = io.read ipv4_buffer.to_slice
       return unless _length = length
       return if _length.zero? || 4_i32 != length
 
       ip_address = ipv4_buffer.to_slice.join "."
 
-      port = io.read_bytes UInt16, IO::ByteFormat::BigEndian rescue nil
+      port = io.read_bytes UInt16, IO::ByteFormat::BigEndian
       return unless _port = port
 
-      ::Socket::IPAddress.new ip_address, _port.to_i32 rescue nil
+      ::Socket::IPAddress.new ip_address, _port.to_i32
     end
   end
 
   {% for name in ["version", "command", "reserved", "address", "authentication", "verify", "status"] %}
-  def self.get_{{name.id}}(io : IO) : {{name.capitalize.id}}?
+  def self.get_{{name.id}}!(io : IO) : {{name.capitalize.id}}?
     buffer = uninitialized UInt8[1_i32]
-    length = io.read buffer.to_slice rescue nil
+    length = io.read buffer.to_slice
 
     return unless _length = length
     return if _length.zero?
@@ -266,9 +266,9 @@ module Herbal
   {% end %}
 
   {% for name in ["username", "password"] %}
-  def self.get_{{name.id}}(io : IO) : String?
+  def self.get_{{name.id}}!(io : IO) : String?
     buffer = uninitialized UInt8[1_i32]
-    length = io.read buffer.to_slice rescue nil
+    length = io.read buffer.to_slice
 
     return unless _length = length
     return if _length.zero?
@@ -277,7 +277,7 @@ module Herbal
     return if {{name.id}}_length.zero?
 
     memory = IO::Memory.new {{name.id}}_length
-    IO.copy io, memory, {{name.id}}_length rescue nil
+    IO.copy io, memory, {{name.id}}_length
 
     String.new memory.to_slice
   end

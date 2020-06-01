@@ -122,21 +122,21 @@ class Herbal::Client < IO
     _command = command || Command::TCPConnection
 
     handshake socket
-    auth_challenge socket
+    auth_challenge! socket
 
     if remote_resolution
       case ip_address = Herbal.to_ip_address host, port
       when ::Socket::IPAddress
-        process socket, ip_address, _command
+        process! socket, ip_address, _command
       else
-        process socket, host, port, _command
+        process! socket, host, port, _command
       end
     else
       method, ip_address = Durian::Resolver.getaddrinfo! host, port, dnsResolver
-      process socket, ip_address, _command
+      process! socket, ip_address, _command
     end
 
-    establish socket
+    establish! socket
   end
 
   private def handshake(socket : IO)
@@ -154,12 +154,12 @@ class Herbal::Client < IO
     socket.flush
   end
 
-  private def auth_challenge(socket : IO)
+  private def auth_challenge!(socket : IO)
     raise UnknownFlag.new unless _version = version
-    raise MalformedPacket.new unless _get_version = Herbal.get_version socket
+    raise MalformedPacket.new unless _get_version = Herbal.get_version! socket
     raise MismatchFlag.new if _get_version != _version
 
-    raise MalformedPacket.new unless _method = Herbal.get_authentication socket
+    raise MalformedPacket.new unless _method = Herbal.get_authentication! socket
     raise MalformedPacket.new unless authentication_methods.includes? _method
 
     memory = IO::Memory.new
@@ -191,12 +191,12 @@ class Herbal::Client < IO
       raise MalformedPacket.new if length.zero?
       raise MalformedPacket.new if 1_u8 != buffer.to_slice[0_i32]
 
-      raise MalformedPacket.new unless verify = Herbal.get_verify socket
+      raise MalformedPacket.new unless verify = Herbal.get_verify! socket
       raise AuthenticationFailed.new unless verify.pass?
     end
   end
 
-  private def process(socket, host : String, port : Int32, command : Command)
+  private def process!(socket, host : String, port : Int32, command : Command)
     raise UnknownFlag.new unless _version = version
 
     memory = IO::Memory.new
@@ -213,7 +213,7 @@ class Herbal::Client < IO
     socket.flush
   end
 
-  private def process(socket, ip_address, command : Command)
+  private def process!(socket, ip_address, command : Command)
     raise UnknownFlag.new unless _version = version
     address_type = Herbal.to_address_type ip_address
 
@@ -240,18 +240,18 @@ class Herbal::Client < IO
     socket.flush
   end
 
-  private def establish(socket : IO)
+  private def establish!(socket : IO)
     raise UnknownFlag.new unless _version = version
-    raise MalformedPacket.new unless _get_version = Herbal.get_version socket
+    raise MalformedPacket.new unless _get_version = Herbal.get_version! socket
     raise MismatchFlag.new if _get_version != _version
 
-    raise MalformedPacket.new unless _get_status = Herbal.get_status socket
+    raise MalformedPacket.new unless _get_status = Herbal.get_status! socket
     raise ConnectionDenied.new unless _get_status.indicates_success?
-    raise MalformedPacket.new unless reserved = Herbal.get_reserved socket
+    raise MalformedPacket.new unless reserved = Herbal.get_reserved! socket
 
-    raise MalformedPacket.new unless address_type = Herbal.get_address socket
+    raise MalformedPacket.new unless address_type = Herbal.get_address! socket
     raise MalformedPacket.new if address_type.domain?
 
-    Herbal.extract_ip_address address_type, socket
+    Herbal.extract_ip_address! address_type, socket
   end
 end
