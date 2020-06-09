@@ -136,78 +136,6 @@ module Herbal
     buffer.to_slice
   end
 
-  def self.ipv6_address_to_bytes(ip_address : ::Socket::IPAddress) : Bytes?
-    return unless ip_address.family.inet6?
-
-    pointer = ip_address.to_unsafe.as LibC::SockaddrIn6*
-    memory = IO::Memory.new 16_i32
-
-    {% if flag?(:darwin) || flag?(:openbsd) || flag?(:freebsd) %}
-      ipv6_address = pointer.value.sin6_addr.__u6_addr.__u6_addr8
-      memory.write ipv6_address.to_slice
-    {% elsif flag?(:linux) && flag?(:musl) %}
-      ipv6_address = pointer.value.sin6_addr.__in6_union.__s6_addr
-      memory.write ipv6_address.to_slice
-    {% elsif flag?(:linux) %}
-      ipv6_address = pointer.value.sin6_addr.__in6_u.__u6_addr8
-      memory.write ipv6_address.to_slice
-    {% else %}
-      return
-    {% end %}
-
-    memory.to_slice
-  end
-
-  def self.decode_ipv6_address(io : IO) : String?
-    buffer = IO::Memory.new 16_i32
-    length = IO.copy io, buffer, 16_i32 rescue nil
-
-    return unless _length = length
-    return if _length.zero?
-    return if 16_i32 != _length
-
-    buffer.rewind
-    ipv6_address = [] of String
-
-    loop do
-      first_byte = buffer.read_byte rescue nil
-      _last_byte = buffer.read_byte rescue nil
-
-      break unless first_byte
-      break unless _last_byte
-
-      first_hex = ("%02x" % first_byte).split String.new
-      _last_hex = ("%02x" % _last_byte).split String.new
-
-      case {first_hex.first, first_hex.last, _last_hex.first, _last_hex.last}
-      when {"0", "0", "0", "0"}
-        next if ipv6_address.empty?
-
-        colon = ":" == ipv6_address.last && ":" == ipv6_address[-2_i32]?
-        ipv6_address << ":" unless colon
-      when {"0", "0", "0", _last_hex.last}
-        ipv6_address << _last_hex.last << ":"
-      when {"0", "0", _last_hex.first, _last_hex.last}
-        ipv6_address << _last_hex.first
-        ipv6_address << _last_hex.last << ":"
-      when {"0", first_hex.last, _last_hex.first, _last_hex.last}
-        ipv6_address << first_hex.last << _last_hex.first
-        ipv6_address << _last_hex.last << ":"
-      else
-        ipv6_address << first_hex.first << first_hex.last
-        ipv6_address << _last_hex.first << _last_hex.last << ":"
-      end
-    end
-
-    return "::" if ipv6_address.empty?
-    ipv6_address.pop if "::" == ipv6_address.last || ":" == ipv6_address.last
-
-    address = ipv6_address.join
-    return String.build { |io| io << "::" << address } if address.to_i?
-
-    address
-  end
-
   def self.extract_domain!(io : IO) : RemoteAddress?
     buffer = uninitialized UInt8[1_i32]
     length = io.read buffer.to_slice
@@ -232,24 +160,15 @@ module Herbal
   def self.extract_ip_address!(address_type : Address, io : IO) : ::Socket::IPAddress?
     case address_type
     when .ipv6?
-      return unless ip_address = Herbal.decode_ipv6_address io
+      return unless ip_address = ::Socket::IPAddress.ipv6_from_io io
+      return unless port = io.read_bytes UInt16, IO::ByteFormat::BigEndian
 
-      port = io.read_bytes UInt16, IO::ByteFormat::BigEndian
-      return unless _port = port
-
-      ::Socket::IPAddress.new ip_address, _port.to_i32
+      ::Socket::IPAddress.new ip_address.address, port.to_i32
     when .ipv4?
-      ipv4_buffer = uninitialized UInt8[4_i32]
-      length = io.read ipv4_buffer.to_slice
-      return unless _length = length
-      return if _length.zero? || 4_i32 != length
+      return unless ip_address = ::Socket::IPAddress.ipv4_from_io io
+      return unless port = io.read_bytes UInt16, IO::ByteFormat::BigEndian
 
-      ip_address = ipv4_buffer.to_slice.join "."
-
-      port = io.read_bytes UInt16, IO::ByteFormat::BigEndian
-      return unless _port = port
-
-      ::Socket::IPAddress.new ip_address, _port.to_i32
+      ::Socket::IPAddress.new ip_address.address, port.to_i32
     end
   end
 

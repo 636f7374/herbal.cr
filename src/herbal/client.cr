@@ -227,7 +227,7 @@ class Herbal::Client < IO
     when .inet?
       memory.write Herbal.ipv4_address_to_bytes ip_address
     when .inet6?
-      unless ipv6_address = Herbal.ipv6_address_to_bytes ip_address
+      unless ipv6_address = ::Socket::IPAddress.ipv6_to_bytes ip_address
         raise MalformedPacket.new "Invalid Ipv6 Address"
       end
 
