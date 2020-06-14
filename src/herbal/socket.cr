@@ -159,10 +159,12 @@ class Herbal::Socket < IO
 
     unless _methods.includes? authentication
       set_accept _version, Verify::Deny
+
       return Verify::Deny
     end
 
     # Set Authentication
+
     memory = IO::Memory.new
     memory.write Bytes[_version.to_i]
     memory.write Bytes[authentication.to_i]
@@ -181,10 +183,12 @@ class Herbal::Socket < IO
       return Verify::Deny if 1_u8 != buffer.to_slice[0_i32]
 
       # Password / UserName
+
       return Verify::Deny unless username = Herbal.get_username! self
       password = Herbal.get_password! self
 
       # SimpleAuth Callback
+
       call = on_auth.try &.call username, password
 
       # 0x01 For Current version of UserName / Password Authentication
@@ -209,13 +213,16 @@ class Herbal::Socket < IO
     buffer = uninitialized UInt8[1_i32]
 
     # Version
+
     raise MalformedPacket.new unless _version = Herbal.get_version! self
     self.version = _version
 
     # Optional
+
     raise MalformedPacket.new unless optional = Herbal.get_optional! self
 
     # Methods
+
     authentication_methods = [] of Authentication
 
     optional.times do
@@ -230,6 +237,7 @@ class Herbal::Socket < IO
     self.authentication_methods = authentication_methods
 
     # Authentication
+
     auth_challenge!
   end
 

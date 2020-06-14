@@ -105,11 +105,6 @@ class Herbal::Client < IO
     _wrapped.write_timeout if _wrapped.responds_to? :write_timeout
   end
 
-  def all_free
-    _wrapped = wrapped
-    _wrapped.all_free if _wrapped.responds_to? :all_free
-  end
-
   def connect!(ip_address : ::Socket::IPAddress, command : Command? = nil, remote_resolution : Bool = false)
     connect! wrapped, ip_address.address, ip_address.port, command || Command::TCPConnection, false
   end
@@ -125,8 +120,9 @@ class Herbal::Client < IO
     auth_challenge! socket
 
     if remote_resolution
-      case ip_address = Herbal.to_ip_address host, port
-      when ::Socket::IPAddress
+      ip_address = Herbal.to_ip_address host, port
+
+      if ip_address
         process! socket, ip_address, _command
       else
         process! socket, host, port, _command
@@ -188,9 +184,9 @@ class Herbal::Client < IO
 
       buffer = uninitialized UInt8[1_i32]
       length = read buffer.to_slice
+
       raise MalformedPacket.new if length.zero?
       raise MalformedPacket.new if 1_u8 != buffer.to_slice[0_i32]
-
       raise MalformedPacket.new unless verify = Herbal.get_verify! socket
       raise AuthenticationFailed.new unless verify.pass?
     end

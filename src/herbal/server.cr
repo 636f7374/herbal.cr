@@ -39,6 +39,7 @@ class Herbal::Server
 
   def process!(socket : Socket, sync_resolution : Bool = false, skip_establish : Bool = false) : Socket
     # HandShake
+
     begin
       handshake = socket.handshake!
 
@@ -50,6 +51,7 @@ class Herbal::Server
     end
 
     # Process
+
     begin
       socket.process! sync_resolution
       raise BadRemoteAddress.new if socket.bad_remote_address?
@@ -60,6 +62,7 @@ class Herbal::Server
     end
 
     # Establish
+
     return socket if skip_establish
 
     begin
@@ -96,10 +99,12 @@ class Herbal::Server
     _socket = Socket.new socket, dnsResolver
 
     # Attach
+
     on_auth.try { |_on_auth| _socket.on_auth = _on_auth }
     authentication.try { |_authentication| _socket.authentication = _authentication }
 
     # TimeOut
+
     client_timeout.try do |_timeout|
       _socket.read_timeout = _timeout.read
       _socket.write_timeout = _timeout.write
