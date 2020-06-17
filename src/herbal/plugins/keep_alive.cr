@@ -81,7 +81,7 @@ module Herbal::Plugin
         length
       end
 
-      def write(slice : Bytes) : Nil
+      def write(slice : Bytes) : Int64
         write_payload slice
       end
 
@@ -91,15 +91,17 @@ module Herbal::Plugin
         self
       end
 
-      def write_payload(slice : Bytes)
+      def write_payload(slice : Bytes) : Int64
         write_payload String.new slice
       end
 
-      def write_payload(value : String)
+      def write_payload(value : String) : Int64
         payload = HTTP::Request.new method, path, body: value
         payload.header_keep_alive = true
         payload.header_host = host
         payload.to_io wrapped
+
+        value.size.to_i64
       end
 
       def flush
@@ -185,7 +187,7 @@ module Herbal::Plugin
         length
       end
 
-      def write(slice : Bytes) : Nil
+      def write(slice : Bytes) : Int64
         write_payload slice
       end
 
@@ -195,14 +197,16 @@ module Herbal::Plugin
         self
       end
 
-      def write_payload(slice : Bytes)
+      def write_payload(slice : Bytes) : Int64
         write_payload String.new slice
       end
 
-      def write_payload(value : String)
+      def write_payload(value : String) : Int64
         payload = HTTP::Client::Response.new statusCode, body: value
         payload.header_keep_alive = true
         payload.to_io wrapped
+
+        value.size.to_i64
       end
 
       def flush

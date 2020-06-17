@@ -26,10 +26,10 @@ class Herbal::Context
     return unless remote.is_a? IO::Memory if remote
     raise UnknownFlag.new unless command = client.command
     raise UnEstablish.new unless clientEstablish
-    raise UnknownFlag.new unless remote_address = client.remote_address
+    raise UnknownFlag.new unless target_remote_address = client.target_remote_address
 
-    host = remote_address.host
-    port = remote_address.port
+    host = target_remote_address.host
+    port = target_remote_address.port
 
     case command
     when .tcp_connection?

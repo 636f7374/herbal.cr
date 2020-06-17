@@ -53,20 +53,20 @@ class Herbal::Socket < IO
     @addressType
   end
 
-  def remote_ip_address=(value : ::Socket::IPAddress)
-    @remoteIpAddress = value
+  def target_remote_ip_address=(value : ::Socket::IPAddress)
+    @targetRemoteIpAddress = value
   end
 
-  def remote_ip_address
-    @remoteIpAddress
+  def target_remote_ip_address
+    @targetRemoteIpAddress
   end
 
-  def remote_address=(value : RemoteAddress)
-    @remoteAddress = value
+  def target_remote_address=(value : RemoteAddress)
+    @targetRemoteAddress = value
   end
 
-  def remote_address
-    @remoteAddress
+  def target_remote_address
+    @targetRemoteAddress
   end
 
   def stats
@@ -74,15 +74,15 @@ class Herbal::Socket < IO
   end
 
   def loopback_unspecified? : Bool
-    return false unless _remote_ip_address = remote_ip_address
-    return true if _remote_ip_address.loopback? || _remote_ip_address.unspecified?
+    return false unless _target_remote_ip_address = target_remote_ip_address
+    return true if _target_remote_ip_address.loopback? || _target_remote_ip_address.unspecified?
 
     false
   end
 
   def bad_remote_address?
-    return false unless _remote_address = remote_address
-    return true if loopback_unspecified? && _remote_address.port.zero?
+    return false unless _target_remote_address = target_remote_address
+    return true if loopback_unspecified? && _target_remote_address.port.zero?
 
     false
   end
@@ -109,7 +109,7 @@ class Herbal::Socket < IO
     _wrapped.write_timeout if _wrapped.responds_to? :write_timeout
   end
 
-  def wrapped_local_address : ::Socket::Address?
+  def local_address : ::Socket::Address?
     _wrapped = wrapped
 
     if _wrapped.responds_to? :local_address
@@ -118,7 +118,7 @@ class Herbal::Socket < IO
     end
   end
 
-  def wrapped_remote_address : ::Socket::Address?
+  def remote_address : ::Socket::Address?
     _wrapped = wrapped
 
     if _wrapped.responds_to? :remote_address
@@ -131,7 +131,7 @@ class Herbal::Socket < IO
     wrapped.read slice
   end
 
-  def write(slice : Bytes) : Nil
+  def write(slice : Bytes) : Int64
     wrapped.write slice
   end
 
@@ -259,8 +259,8 @@ class Herbal::Socket < IO
         raise MalformedPacket.new
       end
 
-      self.remote_address = RemoteAddress.new ip_address.address, ip_address.port
-      self.remote_ip_address = ip_address
+      self.target_remote_address = RemoteAddress.new ip_address.address, ip_address.port
+      self.target_remote_ip_address = ip_address
     when .ipv4?
       ip_address = Herbal.extract_ip_address! address, self
 
@@ -269,27 +269,27 @@ class Herbal::Socket < IO
         raise MalformedPacket.new
       end
 
-      self.remote_address = RemoteAddress.new ip_address.address, ip_address.port
-      self.remote_ip_address = ip_address
+      self.target_remote_address = RemoteAddress.new ip_address.address, ip_address.port
+      self.target_remote_ip_address = ip_address
     when .domain?
-      remote_address = Herbal.extract_domain! self
+      target_remote_address = Herbal.extract_domain! self
 
-      unless remote_address
+      unless target_remote_address
         set_disconnect! version
         raise MalformedPacket.new
       end
 
-      self.remote_address = remote_address
+      self.target_remote_address = target_remote_address
       return unless sync_resolution
 
       begin
-        method, ip_address = Durian::Resolver.getaddrinfo! remote_address.host, remote_address.port, dnsResolver
+        method, target_ip_address = Durian::Resolver.getaddrinfo! target_remote_address.host, target_remote_address.port, dnsResolver
       rescue ex
         set_disconnect! version
         raise ex
       end
 
-      self.remote_ip_address = ip_address
+      self.target_remote_ip_address = target_ip_address
     end
   end
 
@@ -297,9 +297,9 @@ class Herbal::Socket < IO
     raise UnknownFlag.new unless _version = version
     raise UnknownFlag.new unless _address_type = address_type
 
-    ip_address = remote_ip_address
-    ip_address = Herbal.unspecified_ip_address if _address_type.domain? unless sync_resolution
-    raise UnknownFlag.new unless ip_address
+    target_ip_address = target_remote_ip_address
+    target_ip_address = Herbal.unspecified_ip_address if _address_type.domain? unless sync_resolution
+    raise UnknownFlag.new unless target_ip_address
 
     memory = IO::Memory.new
     memory.write Bytes[_version.to_i]
@@ -309,23 +309,23 @@ class Herbal::Socket < IO
     case _address_type
     when .ipv4?
       memory.write Bytes[_address_type.to_i]
-      memory.write Herbal.ipv4_address_to_bytes ip_address
-      memory.write_bytes ip_address.port.to_u16, IO::ByteFormat::BigEndian
+      memory.write Herbal.ipv4_address_to_bytes target_ip_address
+      memory.write_bytes target_ip_address.port.to_u16, IO::ByteFormat::BigEndian
     when .ipv6?
-      unless ipv6_address = ::Socket::IPAddress.ipv6_to_bytes ip_address
+      unless ipv6_address = ::Socket::IPAddress.ipv6_to_bytes target_ip_address
         raise MalformedPacket.new "Invalid Ipv6 Address"
       end
 
       memory.write Bytes[_address_type.to_i]
       memory.write ipv6_address
-      memory.write_bytes ip_address.port.to_u16, IO::ByteFormat::BigEndian
+      memory.write_bytes target_ip_address.port.to_u16, IO::ByteFormat::BigEndian
     when .domain?
-      case ip_address.family
+      case target_ip_address.family
       when .inet?
         memory.write Bytes[Herbal::Address::Ipv4.to_i]
-        memory.write Herbal.ipv4_address_to_bytes ip_address
+        memory.write Herbal.ipv4_address_to_bytes target_ip_address
       when .inet6?
-        unless ipv6_address = ::Socket::IPAddress.ipv6_to_bytes ip_address
+        unless ipv6_address = ::Socket::IPAddress.ipv6_to_bytes target_ip_address
           raise MalformedPacket.new "Invalid Ipv6 Address"
         end
 
@@ -333,7 +333,7 @@ class Herbal::Socket < IO
         memory.write ipv6_address
       end
 
-      memory.write_bytes ip_address.port.to_u16, IO::ByteFormat::BigEndian
+      memory.write_bytes target_ip_address.port.to_u16, IO::ByteFormat::BigEndian
     end
 
     write memory.to_slice

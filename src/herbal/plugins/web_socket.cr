@@ -80,8 +80,10 @@ module Herbal::Plugin
         length
       end
 
-      def write(slice : Bytes) : Nil
+      def write(slice : Bytes) : Int64
         wrapped.send slice
+
+        slice.size.to_i64
       end
 
       def <<(value : String)

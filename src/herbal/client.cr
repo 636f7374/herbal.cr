@@ -61,7 +61,7 @@ class Herbal::Client < IO
     wrapped.read slice
   end
 
-  def write(slice : Bytes) : Nil
+  def write(slice : Bytes) : Int64
     wrapped.write slice
   end
 
