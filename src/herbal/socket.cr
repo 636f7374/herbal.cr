@@ -131,7 +131,7 @@ class Herbal::Socket < IO
     wrapped.read slice
   end
 
-  def write(slice : Bytes) : Int64
+  def write(slice : Bytes) : Int64?
     wrapped.write slice
   end
 
