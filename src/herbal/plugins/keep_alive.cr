@@ -1,24 +1,15 @@
 module Herbal::Plugin
   module KeepAlive
-    class Window
-      property all : Int64
-      property remaining : Int64
-
-      def initialize(@all : Int64 = 0_i64, @remaining : Int64 = 0_i64)
-      end
-    end
-
     class Client < IO
       property wrapped : IO
       property host : String
+      property windowRemaining : Int64
       property method : String
       property path : String
-      property window : Window
 
-      def initialize(@wrapped : IO, @host : String)
+      def initialize(@wrapped : IO, @host : String, @windowRemaining : Int64 = 0_i64)
         @method = "GET"
         @path = "/"
-        @window = Window.new
       end
 
       def self.new(wrapped : IO, host : String, port : Int32)
@@ -50,38 +41,29 @@ module Herbal::Plugin
       end
 
       private def update_window
-        finished = false
-
-        case {window.all, window.remaining}
-        when {0_i64, window.remaining}
-          finished = true
-        when {window.all, 0_i64}
-          finished = true
-        end
-
-        return unless finished
+        _end = false
+        _end = true if windowRemaining.zero?
+        return unless _end
 
         payload = from_io
-        window.all = payload.content_length
-        window.remaining = payload.content_length
+        self.windowRemaining = payload.content_length
       end
 
       def read(slice : Bytes) : Int32
         update_window
-
-        length = (window.remaining >= slice.size) ? slice.size : window.remaining
+        length = (windowRemaining >= slice.size) ? slice.size : windowRemaining
 
         temporary = IO::Memory.new length
         length = IO.copy wrapped, temporary, length
         temporary.rewind
 
         length = temporary.read slice
-        window.remaining -= length
+        self.windowRemaining -= length
 
         length
       end
 
-      def write(slice : Bytes) : Int64
+      def write(slice : Bytes) : Nil
         write_payload slice
       end
 
@@ -97,6 +79,7 @@ module Herbal::Plugin
 
       def write_payload(value : String) : Int64
         payload = HTTP::Request.new method, path, body: value
+
         payload.header_keep_alive = true
         payload.header_host = host
         payload.to_io wrapped
@@ -119,12 +102,11 @@ module Herbal::Plugin
 
     class Server < IO
       property wrapped : IO
+      property windowRemaining : Int64
       property statusCode : Int32
-      property window : Window
 
-      def initialize(@wrapped : IO)
+      def initialize(@wrapped : IO, @windowRemaining : Int64 = 0_i64)
         @statusCode = 200_i32
-        @window = Window.new
       end
 
       def read_timeout=(value : Int | Float | Time::Span | Nil)
@@ -152,42 +134,33 @@ module Herbal::Plugin
       end
 
       private def update_window
-        finished = false
-
-        case {window.all, window.remaining}
-        when {0_i64, window.remaining}
-          finished = true
-        when {window.all, 0_i64}
-          finished = true
-        end
-
-        return unless finished
+        _end = false
+        _end = true if windowRemaining.zero?
+        return unless _end
 
         payload = from_io
         raise MalformedPacket.new unless payload.is_a? HTTP::Request
 
-        window.all = payload.content_length
-        window.remaining = payload.content_length
+        self.windowRemaining = payload.content_length
       end
 
       def read(slice : Bytes) : Int32
         return 0_i32 if slice.empty?
 
         update_window
-
-        length = (window.remaining >= slice.size) ? slice.size : window.remaining
+        length = (windowRemaining >= slice.size) ? slice.size : windowRemaining
 
         temporary = IO::Memory.new length
         length = IO.copy wrapped, temporary, length
         temporary.rewind
 
         length = temporary.read slice
-        window.remaining -= length
+        self.windowRemaining -= length
 
         length
       end
 
-      def write(slice : Bytes) : Int64
+      def write(slice : Bytes) : Nil
         write_payload slice
       end
 
@@ -203,6 +176,7 @@ module Herbal::Plugin
 
       def write_payload(value : String) : Int64
         payload = HTTP::Client::Response.new statusCode, body: value
+
         payload.header_keep_alive = true
         payload.to_io wrapped
 

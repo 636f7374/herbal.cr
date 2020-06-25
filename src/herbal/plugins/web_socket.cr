@@ -1,23 +1,14 @@
 module Herbal::Plugin
   module WebSocket
-    class Window
-      property all : Int32
-      property remaining : Int32
-
-      def initialize(@all : Int32 = 0_i32, @remaining : Int32 = 0_i32)
-      end
-    end
-
     class Stream < IO
       alias Opcode = HTTP::WebSocket::Protocol::Opcode
       alias Protocol = HTTP::WebSocket::Protocol
 
       property wrapped : Protocol
-      property window : Window
+      property windowRemaining : Int32
       property buffer : IO::Memory
 
-      def initialize(@wrapped : Protocol)
-        @window = Window.new
+      def initialize(@wrapped : Protocol, @windowRemaining : Int32 = 0_i32)
         @buffer = IO::Memory.new
       end
 
@@ -48,9 +39,8 @@ module Herbal::Plugin
           receive = wrapped.receive receive_buffer.to_slice
 
           case receive.opcode
-          when Opcode::TEXT, Opcode::BINARY
-            window.all = receive.size
-            window.remaining = receive.size
+          when .binary?
+            self.windowRemaining = receive.size
 
             buffer.rewind ensure buffer.clear
             buffer.write receive_buffer.to_slice[0_i32, receive.size]
@@ -60,30 +50,18 @@ module Herbal::Plugin
         end
       end
 
-      private def update_window
-        case {window.all, window.remaining}
-        when {0_i32, window.remaining}
-          update_buffer
-        when {window.all, 0_i32}
-          update_buffer
-        end
-      end
-
       def read(slice : Bytes) : Int32
         return 0_i32 if slice.empty?
-
-        update_window
+        update_buffer if windowRemaining.zero?
 
         length = buffer.read slice
-        window.remaining -= length
+        self.windowRemaining -= length
 
         length
       end
 
-      def write(slice : Bytes) : Int64
+      def write(slice : Bytes) : Nil
         wrapped.send slice
-
-        slice.size.to_i64
       end
 
       def <<(value : String)
