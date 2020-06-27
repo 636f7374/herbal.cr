@@ -57,6 +57,15 @@ class Herbal::Context
 
   def transport
     _transport = Transport.new client, remote
+
+    heartbeat = ->do
+      _client = client
+      return unless _client.is_a? Socket
+
+      client_wrapped = _client.wrapped
+      client_wrapped.ping if client_wrapped.is_a? Plugin::WebSocket::Stream
+    end
+
     _transport.perform
   end
 

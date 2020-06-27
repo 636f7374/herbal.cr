@@ -7,9 +7,11 @@ module Herbal::Plugin
       property wrapped : Protocol
       property windowRemaining : Int32
       property buffer : IO::Memory
+      getter mutex : Mutex
 
       def initialize(@wrapped : Protocol, @windowRemaining : Int32 = 0_i32)
         @buffer = IO::Memory.new
+        @mutex = Mutex.new :unchecked
       end
 
       def read_timeout=(value : Int | Float | Time::Span | Nil)
@@ -46,8 +48,14 @@ module Herbal::Plugin
             buffer.write receive_buffer.to_slice[0_i32, receive.size]
 
             break buffer.rewind
+          when .ping?
+            @mutex.synchronize { wrapped.pong }
           end
         end
+      end
+
+      def ping
+        @mutex.synchronize { wrapped.ping }
       end
 
       def read(slice : Bytes) : Int32
@@ -61,13 +69,7 @@ module Herbal::Plugin
       end
 
       def write(slice : Bytes) : Nil
-        wrapped.send slice
-      end
-
-      def <<(value : String)
-        wrapped.send value
-
-        self
+        @mutex.synchronize { wrapped.send slice }
       end
 
       def flush

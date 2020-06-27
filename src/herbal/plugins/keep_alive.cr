@@ -67,12 +67,6 @@ module Herbal::Plugin
         write_payload slice
       end
 
-      def <<(value : String)
-        write_payload value
-
-        self
-      end
-
       def write_payload(slice : Bytes) : Int64
         write_payload String.new slice
       end
@@ -162,12 +156,6 @@ module Herbal::Plugin
 
       def write(slice : Bytes) : Nil
         write_payload slice
-      end
-
-      def <<(value : String)
-        write_payload value
-
-        self
       end
 
       def write_payload(slice : Bytes) : Int64
