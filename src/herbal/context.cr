@@ -71,10 +71,18 @@ class Herbal::Context
     _transport.side = Transport::Side::Server
 
     loop do
-      next sleep 0.5_f32 unless _transport.uploaded_size
-      next sleep 0.5_f32 unless _transport.received_size
+      status = ->do
+        case _transport.side
+        when Transport::Side::Client
+          _transport.uploaded_size || _transport.received_size
+        else
+          _transport.uploaded_size && _transport.received_size
+        end
+      end
 
-      break _transport.cleanup
+      return _transport.cleanup if status.call
+
+      next sleep 0.05_f32
     end
   end
 
