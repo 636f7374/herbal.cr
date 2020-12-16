@@ -55,28 +55,37 @@ class Herbal::Context
     remote.close rescue nil
   end
 
-  def transport
-    _transport = Transport.new client, remote
+  def heartbeat_proc : Proc(Nil)?
+    return unless client_wrapped = client.wrapped
+    return unless client_wrapped.is_a? Plugin::WebSocket::Stream
 
-    heartbeat = ->do
-      _client = client
-      return unless _client.is_a? Socket
-
-      client_wrapped = _client.wrapped
+    ->do
+      return unless client_wrapped = client.wrapped
       client_wrapped.ping if client_wrapped.is_a? Plugin::WebSocket::Stream
     end
-
-    _transport.perform
   end
 
-  def perform
+  def transport(side : Transport::Side = Transport::Side::Server)
+    _transport = Transport.new client, remote, heartbeat: heartbeat_proc
+    _transport.perform
+    _transport.side = Transport::Side::Server
+
+    loop do
+      next sleep 0.5_f32 unless _transport.uploaded_size
+      next sleep 0.5_f32 unless _transport.received_size
+
+      break _transport.cleanup
+    end
+  end
+
+  def perform(side : Transport::Side = Transport::Side::Server)
     begin
       connect_remote!
     rescue ex
       return all_close
     end
 
-    transport
+    transport side
   end
 
   def client_establish
