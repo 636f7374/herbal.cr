@@ -56,13 +56,16 @@
 require "herbal"
 
 # Durian
-servers = [] of Tuple(Socket::IPAddress, Durian::Protocol)
-servers << Tuple.new Socket::IPAddress.new("8.8.8.8", 53_i32), Durian::Protocol::UDP
-servers << Tuple.new Socket::IPAddress.new("1.1.1.1", 53_i32), Durian::Protocol::UDP
+
+servers = [] of Durian::Resolver::Server
+servers << Durian::Resolver::Server.new ipAddress: Socket::IPAddress.new("8.8.8.8", 53_i32), protocol: Durian::Protocol::TCP
+servers << Durian::Resolver::Server.new ipAddress: Socket::IPAddress.new("1.1.1.1", 53_i32), protocol: Durian::Protocol::TCP
+
 resolver = Durian::Resolver.new servers
 resolver.ip_cache = Durian::Cache::IPAddress.new
 
 # Herbal
+
 begin
   client = Herbal::Client.new "0.0.0.0", 1234_i32, resolver
 
@@ -73,12 +76,14 @@ begin
   client.connect! "www.example.com", 80_i32, Herbal::Command::TCPConnection, true
 
   # Write Payload
+
   memory = IO::Memory.new
   request = HTTP::Request.new "GET", "http://www.example.com"
   request.to_io memory
   client.write memory.to_slice
 
   # _Read Payload
+
   buffer = uninitialized UInt8[4096_i32]
   length = client.read buffer.to_slice
 
@@ -103,13 +108,16 @@ def handle_client(context : Herbal::Context)
 end
 
 # Durian
-servers = [] of Tuple(Socket::IPAddress, Durian::Protocol)
-servers << Tuple.new Socket::IPAddress.new("8.8.8.8", 53_i32), Durian::Protocol::UDP
-servers << Tuple.new Socket::IPAddress.new("1.1.1.1", 53_i32), Durian::Protocol::UDP
+
+servers = [] of Durian::Resolver::Server
+servers << Durian::Resolver::Server.new ipAddress: Socket::IPAddress.new("8.8.8.8", 53_i32), protocol: Durian::Protocol::TCP
+servers << Durian::Resolver::Server.new ipAddress: Socket::IPAddress.new("1.1.1.1", 53_i32), protocol: Durian::Protocol::TCP
+
 resolver = Durian::Resolver.new servers
 resolver.ip_cache = Durian::Cache::IPAddress.new
 
 # Herbal
+
 tcp_server = TCPServer.new "0.0.0.0", 1234_i32
 herbal = Herbal::Server.new tcp_server, resolver
 herbal.authentication = Herbal::Authentication::NoAuthentication
