@@ -67,8 +67,9 @@ class Herbal::Context
 
   def transport(side : Transport::Side = Transport::Side::Server)
     _transport = Transport.new client, remote, heartbeat: heartbeat_proc
+    _transport.side = side
+
     _transport.perform
-    _transport.side = Transport::Side::Server
 
     loop do
       status = ->do
