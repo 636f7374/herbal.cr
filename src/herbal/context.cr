@@ -60,12 +60,14 @@ class Herbal::Context
     return unless client_wrapped.is_a? Plugin::WebSocket::Stream
 
     ->do
-      return unless client_wrapped = client.wrapped
-      client_wrapped.ping if client_wrapped.is_a? Plugin::WebSocket::Stream
+      return unless _client_wrapped = client.wrapped
+      _client_wrapped.ping if _client_wrapped.is_a? Plugin::WebSocket::Stream
+
+      nil
     end
   end
 
-  def transport(side : Transport::Side = Transport::Side::Server)
+  def transport(side : Transport::Side = Transport::Side::Remote)
     _transport = Transport.new client, remote, heartbeat: heartbeat_proc
     _transport.side = side
 
@@ -87,7 +89,7 @@ class Herbal::Context
     end
   end
 
-  def perform(side : Transport::Side = Transport::Side::Server)
+  def perform(side : Transport::Side = Transport::Side::Remote)
     begin
       connect_remote!
     rescue ex
