@@ -56,14 +56,27 @@ class Herbal::Context
   end
 
   def heartbeat_proc : Proc(Nil)?
-    return unless client_wrapped = client.wrapped
-    return unless client_wrapped.is_a? Plugin::WebSocket::Stream
+    is_client_herbal = client.try &.is_a? Herbal::Socket
+    is_remote_herbal = remote.try &.is_a? Herbal::Socket || remote.try &.is_a? Herbal::Client
 
-    ->do
-      return unless _client_wrapped = client.wrapped
-      _client_wrapped.ping if _client_wrapped.is_a? Plugin::WebSocket::Stream
+    if is_client_herbal || is_remote_herbal
+      ->do
+        _client = client
 
-      nil
+        if _client.is_a? Herbal::Socket
+          client_wrapped = _client.wrapped
+          client_wrapped.ping if client_wrapped.is_a? Herbal::Plugin::WebSocket::Stream
+        end
+
+        _remote = remote
+
+        if _remote.is_a?(Herbal::Socket) || _remote.is_a?(Herbal::Client)
+          remote_wrapped = _remote.wrapped
+          remote_wrapped.ping if remote_wrapped.is_a? Herbal::Plugin::WebSocket::Stream
+        end
+
+        nil
+      end
     end
   end
 
