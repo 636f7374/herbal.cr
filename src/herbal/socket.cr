@@ -1,8 +1,11 @@
 class Herbal::Socket < IO
-  getter dnsResolver : Durian::Resolver
   property wrapped : IO
+  getter dnsResolver : Durian::Resolver
+  getter option : Herbal::Option?
+  getter mutex : Mutex
 
-  def initialize(@wrapped : IO, @dnsResolver : Durian::Resolver)
+  def initialize(@wrapped : IO, @dnsResolver : Durian::Resolver, @option : Herbal::Option? = nil)
+    @mutex = Mutex.new :unchecked
   end
 
   def version=(value : Version)
@@ -35,6 +38,14 @@ class Herbal::Socket < IO
 
   def on_auth
     @onAuth
+  end
+
+  def active=(value : Bool)
+    @active = value
+  end
+
+  def active?
+    @active
   end
 
   def command=(value : Command)
@@ -73,6 +84,20 @@ class Herbal::Socket < IO
     Stats.from_socket self
   end
 
+  def keep_alive?
+    return false unless _wrapped = wrapped
+    return false unless _wrapped.is_a? Plugin::WebSocket::Stream
+
+    _wrapped.keep_alive?
+  end
+
+  def reset_keep_alive
+    return false unless _wrapped = wrapped
+    return false unless _wrapped.is_a? Plugin::WebSocket::Stream
+
+    _wrapped.keep_alive = nil
+  end
+
   def loopback_unspecified? : Bool
     return false unless _target_remote_ip_address = target_remote_ip_address
     return true if _target_remote_ip_address.loopback? || _target_remote_ip_address.unspecified?
@@ -82,7 +107,7 @@ class Herbal::Socket < IO
 
   def bad_remote_address?
     return false unless _target_remote_address = target_remote_address
-    return true if loopback_unspecified? && _target_remote_address.port.zero?
+    return true if _target_remote_address.port.zero?
 
     false
   end

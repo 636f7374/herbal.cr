@@ -50,6 +50,8 @@ module Herbal::Plugin
       end
 
       def read(slice : Bytes) : Int32
+        return 0_i32 if slice.empty?
+
         update_window
         length = (windowRemaining >= slice.size) ? slice.size : windowRemaining
 

@@ -17,8 +17,7 @@ resolver.ip_cache = Durian::Cache::IPAddress.new
 
 # Herbal
 
-tcp_server = TCPServer.new "0.0.0.0", 1234_i32
-herbal = Herbal::Server.new tcp_server, resolver
+herbal = Herbal::Server.new "0.0.0.0", 1234_i32, resolver
 herbal.authentication = Herbal::Authentication::NoAuthentication
 herbal.client_timeout = Herbal::TimeOut.new
 herbal.remote_timeout = Herbal::TimeOut.new

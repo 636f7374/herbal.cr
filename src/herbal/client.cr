@@ -19,6 +19,7 @@ class Herbal::Client < IO
 
   def self.new(host : String, port : Int32, dnsResolver : Durian::Resolver, timeout : TimeOut = TimeOut.new)
     wrapped = Durian::TCPSocket.connect host, port, dnsResolver, timeout.connect
+
     wrapped.read_timeout = timeout.read
     wrapped.write_timeout = timeout.write
 

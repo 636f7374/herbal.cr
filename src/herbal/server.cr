@@ -1,8 +1,14 @@
 class Herbal::Server
   getter wrapped : ::Socket::Server
   getter dnsResolver : Durian::Resolver
+  getter option : Herbal::Option?
 
-  def initialize(@wrapped : ::Socket::Server, @dnsResolver : Durian::Resolver)
+  def initialize(@wrapped : ::Socket::Server, @dnsResolver : Durian::Resolver, @option : Herbal::Option? = nil)
+  end
+
+  def self.new(host : String, port : Int32, dns_resolver : Durian::Resolver, option : Herbal::Option? = nil)
+    tcp_server = TCPServer.new host, port
+    new wrapped: tcp_server, dnsResolver: dns_resolver, option: option
   end
 
   def authentication=(value : Authentication)
@@ -38,6 +44,12 @@ class Herbal::Server
   end
 
   def process!(socket : Socket, sync_resolution : Bool = false, skip_establish : Bool = false) : Socket
+    # Set socket activity status to true, Set keep alive to nil
+    # ** Necessary to achieve similar HTTP/1.1 pipeline feature
+
+    socket.active = true
+    socket.reset_keep_alive
+
     # HandShake
 
     begin
@@ -84,8 +96,9 @@ class Herbal::Server
     process! socket, sync_resolution, skip_establish
 
     context = Context.new socket, dnsResolver
-    remote_timeout.try { |_timeout| context.timeout = _timeout }
     context.clientEstablish = true unless skip_establish
+
+    remote_timeout.try { |_timeout| context.timeout = _timeout }
 
     context
   end
@@ -96,7 +109,7 @@ class Herbal::Server
 
   def accept? : Socket?
     return unless socket = wrapped.accept?
-    _socket = Socket.new socket, dnsResolver
+    _socket = Socket.new socket, dnsResolver, option
 
     # Attach
 

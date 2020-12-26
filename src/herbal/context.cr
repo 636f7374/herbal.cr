@@ -24,6 +24,7 @@ class Herbal::Context
 
   def connect_remote!
     return unless remote.is_a? IO::Memory if remote
+
     raise UnknownFlag.new unless command = client.command
     raise UnEstablish.new unless clientEstablish
     raise UnknownFlag.new unless target_remote_address = client.target_remote_address
@@ -43,7 +44,7 @@ class Herbal::Context
       remote = Durian::Resolver.get_udp_socket! host, port, dnsResolver
     end
 
-    self.remote = remote if remote
+    remote.try { |_remote| self.remote = _remote }
     remote.try &.read_timeout = timeout.read
     remote.try &.write_timeout = timeout.write
 
@@ -80,36 +81,69 @@ class Herbal::Context
     end
   end
 
-  def transport(side : Transport::Side = Transport::Side::Remote)
+  def transport(reliable : Transport::Reliable)
     _transport = Transport.new client, remote, heartbeat: heartbeat_proc
-    _transport.side = side
-
+    _transport.reliable = reliable
     _transport.perform
 
+    waiting_transport _transport
+  end
+
+  private def waiting_transport(transport : Transport)
+    check_finish_proc = ->do
+      case transport.reliable
+      when Transport::Reliable::Half
+        transport.uploaded_size || transport.received_size
+      else
+        transport.uploaded_size && transport.received_size
+      end
+    end
+
+    keep_alive_proc = ->do
+      client_wrapped = client.wrapped
+      return false unless client_wrapped.is_a? Herbal::Plugin::WebSocket::Stream
+      return false unless need_disconnect_peer = client_wrapped.need_disconnect_peer?
+
+      case client_wrapped.keep_alive?
+      when true
+        transport.cleanup_side Transport::Side::Remote, free_tls: true
+
+        client.active = false
+        client_wrapped.need_disconnect_peer = nil
+
+        return true
+      when false
+        transport.cleanup_all
+
+        client.active = false
+        client_wrapped.need_disconnect_peer = nil
+
+        return true
+      end
+    end
+
     loop do
-      status = ->do
-        case _transport.side
-        when Transport::Side::Client
-          _transport.uploaded_size || _transport.received_size
-        else
-          _transport.uploaded_size && _transport.received_size
-        end
+      break if keep_alive_proc.call
+
+      if check_finish_proc.call
+        transport.cleanup_all
+        client.active = false
+
+        break
       end
 
-      return _transport.cleanup if status.call
-
-      next sleep 0.05_f32
+      next sleep 0.25_f32
     end
   end
 
-  def perform(side : Transport::Side = Transport::Side::Remote)
+  def perform(reliable : Transport::Reliable = Transport::Reliable::Half)
     begin
       connect_remote!
     rescue ex
       return all_close
     end
 
-    transport side
+    transport reliable
   end
 
   def client_establish
