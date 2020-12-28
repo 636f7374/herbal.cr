@@ -90,15 +90,6 @@ class Herbal::Context
   end
 
   private def waiting_transport(transport : Transport)
-    check_finish_proc = ->do
-      case transport.reliable
-      when Transport::Reliable::Half
-        transport.uploaded_size || transport.received_size
-      else
-        transport.uploaded_size && transport.received_size
-      end
-    end
-
     keep_alive_proc = ->do
       client_wrapped = client.wrapped
       return false unless client_wrapped.is_a? Herbal::Plugin::WebSocket::Stream
@@ -125,7 +116,7 @@ class Herbal::Context
     loop do
       break if keep_alive_proc.call
 
-      if check_finish_proc.call
+      if transport.reliable_status.call
         transport.cleanup_all
         client.active = false
 
