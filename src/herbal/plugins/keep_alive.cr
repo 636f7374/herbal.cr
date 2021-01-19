@@ -3,11 +3,11 @@ module Herbal::Plugin
     class Client < IO
       property wrapped : IO
       property host : String
-      property windowRemaining : Int64
+      property windowRemaining : Atomic(Int64)
       property method : String
       property path : String
 
-      def initialize(@wrapped : IO, @host : String, @windowRemaining : Int64 = 0_i64)
+      def initialize(@wrapped : IO, @host : String, @windowRemaining : Atomic(Int64) = Atomic(Int64).new 0_i64)
         @method = "GET"
         @path = "/"
       end
@@ -42,25 +42,25 @@ module Herbal::Plugin
 
       private def update_window
         _end = false
-        _end = true if windowRemaining.zero?
+        _end = true if windowRemaining.get.zero?
         return unless _end
 
         payload = from_io
-        self.windowRemaining = payload.content_length
+        self.windowRemaining.set payload.content_length
       end
 
       def read(slice : Bytes) : Int32
         return 0_i32 if slice.empty?
 
         update_window
-        length = (windowRemaining >= slice.size) ? slice.size : windowRemaining
+        length = (self.windowRemaining.get >= slice.size) ? slice.size : self.windowRemaining.get
 
         temporary = IO::Memory.new length
         length = IO.copy wrapped, temporary, length
         temporary.rewind
 
         length = temporary.read slice
-        self.windowRemaining -= length
+        self.windowRemaining.add -length.to_i64
 
         length
       end
@@ -98,10 +98,10 @@ module Herbal::Plugin
 
     class Server < IO
       property wrapped : IO
-      property windowRemaining : Int64
+      property windowRemaining : Atomic(Int64)
       property statusCode : Int32
 
-      def initialize(@wrapped : IO, @windowRemaining : Int64 = 0_i64)
+      def initialize(@wrapped : IO, @windowRemaining : Atomic(Int64) = Atomic(Int64).new 0_i64)
         @statusCode = 200_i32
       end
 
@@ -131,27 +131,27 @@ module Herbal::Plugin
 
       private def update_window
         _end = false
-        _end = true if windowRemaining.zero?
+        _end = true if windowRemaining.get.zero?
         return unless _end
 
         payload = from_io
         raise MalformedPacket.new unless payload.is_a? HTTP::Request
 
-        self.windowRemaining = payload.content_length
+        self.windowRemaining.set payload.content_length
       end
 
       def read(slice : Bytes) : Int32
         return 0_i32 if slice.empty?
 
         update_window
-        length = (windowRemaining >= slice.size) ? slice.size : windowRemaining
+        length = (self.windowRemaining.get >= slice.size) ? slice.size : self.windowRemaining.get
 
         temporary = IO::Memory.new length
         length = IO.copy wrapped, temporary, length
         temporary.rewind
 
         length = temporary.read slice
-        self.windowRemaining -= length
+        self.windowRemaining.add -length.to_i64
 
         length
       end

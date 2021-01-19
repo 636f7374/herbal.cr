@@ -41,11 +41,11 @@ class Herbal::Socket < IO
   end
 
   def active=(value : Bool)
-    @active = value
+    mutex.synchronize { @active = value }
   end
 
   def active?
-    @active
+    mutex.synchronize { @active }
   end
 
   def command=(value : Command)

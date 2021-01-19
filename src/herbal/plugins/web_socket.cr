@@ -14,13 +14,15 @@ module Herbal::Plugin
       end
 
       property wrapped : Protocol
-      property windowRemaining : Int32
+      property windowRemaining : Atomic(Int32)
       property option : Herbal::Option?
       getter buffer : IO::Memory
+      getter ioMutex : Mutex
       getter mutex : Mutex
 
-      def initialize(@wrapped : Protocol, @windowRemaining : Int32 = 0_i32, @option : Herbal::Option? = nil)
+      def initialize(@wrapped : Protocol, @windowRemaining : Atomic(Int32) = Atomic(Int32).new(0_i32), @option : Herbal::Option? = nil)
         @buffer = IO::Memory.new
+        @ioMutex = Mutex.new :unchecked
         @mutex = Mutex.new :unchecked
       end
 
@@ -45,19 +47,19 @@ module Herbal::Plugin
       end
 
       def keep_alive=(value : Bool?)
-        @keepAlive = value
+        @mutex.synchronize { @keepAlive = value }
       end
 
       def keep_alive?
-        @keepAlive
+        @mutex.synchronize { @keepAlive }
       end
 
       def need_disconnect_peer=(value : Bool?)
-        @needDisconnectPeer = value
+        @mutex.synchronize { @needDisconnectPeer = value }
       end
 
       def need_disconnect_peer?
-        @needDisconnectPeer
+        @mutex.synchronize { @needDisconnectPeer }
       end
 
       private def update_buffer
@@ -68,7 +70,7 @@ module Herbal::Plugin
 
           case receive.opcode
           when .binary?
-            self.windowRemaining = receive.size
+            self.windowRemaining.set receive.size
 
             buffer.rewind
             buffer.clear
@@ -84,25 +86,23 @@ module Herbal::Plugin
 
             case enhanced_ping
             when EnhancedPing::KeepAlive
-              @mutex.synchronize do
-                allow_keep_alive = option.try &.allowKeepAlive
+              allow_keep_alive = option.try &.allowKeepAlive
 
-                if allow_keep_alive
-                  wrapped.pong Bytes[EnhancedPong::Confirmed.to_i]
+              if allow_keep_alive
+                pong EnhancedPong::Confirmed
 
-                  self.keep_alive = true
-                  self.need_disconnect_peer = true
-                else
-                  wrapped.pong Bytes[EnhancedPong::Refused.to_i]
+                self.keep_alive = true
+                self.need_disconnect_peer = true
+              else
+                pong EnhancedPong::Refused
 
-                  self.keep_alive = false
-                  self.need_disconnect_peer = true
-                end
+                self.keep_alive = false
+                self.need_disconnect_peer = true
               end
 
               raise Exception.new "NoticedKeepAlive"
             else
-              @mutex.synchronize { wrapped.pong }
+              pong nil
             end
           end
         end
@@ -127,24 +127,30 @@ module Herbal::Plugin
         end
       end
 
+      def pong(event : EnhancedPong? = nil)
+        message = Bytes[event.to_i] if event
+
+        @ioMutex.synchronize { wrapped.pong message }
+      end
+
       def ping(event : EnhancedPing? = nil)
         message = Bytes[event.to_i] if event
 
-        @mutex.synchronize { wrapped.ping message }
+        @ioMutex.synchronize { wrapped.ping message }
       end
 
       def read(slice : Bytes) : Int32
         return 0_i32 if slice.empty?
-        update_buffer if windowRemaining.zero?
+        update_buffer if windowRemaining.get.zero?
 
         length = buffer.read slice
-        self.windowRemaining -= length
+        self.windowRemaining.add -length
 
         length
       end
 
       def write(slice : Bytes) : Nil
-        @mutex.synchronize { wrapped.send slice }
+        @ioMutex.synchronize { wrapped.send slice }
       end
 
       def flush
