@@ -45,6 +45,7 @@ jobs:
         brew install openssl
         brew link --overwrite openssl
         brew uninstall --force --ignore-dependencies python
+        rm $(which 2to3)
         brew cleanup -s python
         brew cleanup --prune-prefix
         brew install python
