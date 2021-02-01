@@ -43,6 +43,16 @@ class Herbal::Server
     @remoteTimeOut
   end
 
+  def local_address : ::Socket::Address?
+    _wrapped = wrapped
+    _wrapped.responds_to?(:local_address) ? _wrapped.local_address : nil
+  end
+
+  def remote_address : ::Socket::Address?
+    _wrapped = wrapped
+    _wrapped.responds_to?(:remote_address) ? _wrapped.remote_address : nil
+  end
+
   def process!(socket : Socket, sync_resolution : Bool = false, skip_establish : Bool = false) : Socket
     # Set socket activity status to true, Set keep alive to nil
     # ** Necessary to achieve similar HTTP/1.1 pipeline feature

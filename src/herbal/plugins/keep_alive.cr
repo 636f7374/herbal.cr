@@ -36,6 +36,16 @@ module Herbal::Plugin
         _wrapped.write_timeout if _wrapped.responds_to? :write_timeout
       end
 
+      def local_address : ::Socket::Address?
+        _wrapped = wrapped
+        _wrapped.responds_to?(:local_address) ? _wrapped.local_address : nil
+      end
+
+      def remote_address : ::Socket::Address?
+        _wrapped = wrapped
+        _wrapped.responds_to?(:remote_address) ? _wrapped.remote_address : nil
+      end
+
       private def from_io
         HTTP::Client::Response.from_io wrapped, ignore_body: true
       end
@@ -123,6 +133,16 @@ module Herbal::Plugin
       def write_timeout
         _wrapped = wrapped
         _wrapped.write_timeout if _wrapped.responds_to? :write_timeout
+      end
+
+      def local_address : ::Socket::Address?
+        _wrapped = wrapped
+        _wrapped.responds_to?(:local_address) ? _wrapped.local_address : nil
+      end
+
+      def remote_address : ::Socket::Address?
+        _wrapped = wrapped
+        _wrapped.responds_to?(:remote_address) ? _wrapped.remote_address : nil
       end
 
       private def from_io

@@ -136,20 +136,12 @@ class Herbal::Socket < IO
 
   def local_address : ::Socket::Address?
     _wrapped = wrapped
-
-    if _wrapped.responds_to? :local_address
-      local = _wrapped.local_address
-      local if local.is_a? ::Socket::Address
-    end
+    _wrapped.responds_to?(:local_address) ? _wrapped.local_address : nil
   end
 
   def remote_address : ::Socket::Address?
     _wrapped = wrapped
-
-    if _wrapped.responds_to? :remote_address
-      remote = _wrapped.remote_address
-      remote if remote.is_a? ::Socket::Address
-    end
+    _wrapped.responds_to?(:remote_address) ? _wrapped.remote_address : nil
   end
 
   def read(slice : Bytes) : Int32
