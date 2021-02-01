@@ -1,79 +1,79 @@
 class Herbal::Context
-  getter client : Socket
+  getter source : Socket
   getter dnsResolver : Durian::Resolver
   property timeout : TimeOut
-  property clientEstablish : Bool
-  property remote : IO
+  property sourceEstablish : Bool
+  property destination : IO
 
-  def initialize(@client : Socket, @dnsResolver : Durian::Resolver, @timeout : TimeOut = TimeOut.new)
-    @clientEstablish = false
-    @remote = Herbal.empty_io
+  def initialize(@source : Socket, @dnsResolver : Durian::Resolver, @timeout : TimeOut = TimeOut.new)
+    @sourceEstablish = false
+    @destination = Herbal.empty_io
   end
 
-  def remote=(value : IO)
-    @remote = value
+  def destination=(value : IO)
+    @destination = value
   end
 
-  def remote
-    @remote
+  def destination
+    @destination
   end
 
   def stats
-    Stats.from_socket client
+    Stats.from_socket source
   end
 
-  def connect_remote!
-    return unless remote.is_a? IO::Memory if remote
+  def connect_destination!
+    return unless destination.is_a? IO::Memory if destination
 
-    raise UnknownFlag.new unless command = client.command
-    raise UnEstablish.new unless clientEstablish
-    raise UnknownFlag.new unless target_remote_address = client.target_remote_address
+    raise UnknownFlag.new unless command = source.command
+    raise UnEstablish.new unless sourceEstablish
+    raise UnknownFlag.new unless destination_address = source.destination_address
 
-    host = target_remote_address.host
-    port = target_remote_address.port
+    host = destination_address.host
+    port = destination_address.port
 
     case command
     when .tcp_connection?
-      remote = Durian::TCPSocket.connect host, port, dnsResolver, timeout.connect
+      destination = Durian::TCPSocket.connect host, port, dnsResolver, timeout.connect
     when .tcp_binding?
-      remote = Durian::TCPSocket.connect host, port, dnsResolver, timeout.connect
-      remote.reuse_address = true
-      remote.reuse_port = true
-      remote.bind remote.local_address
+      destination = Durian::TCPSocket.connect host, port, dnsResolver, timeout.connect
+      destination.reuse_address = true
+      destination.reuse_port = true
+      destination.bind destination.local_address
     when .associate_udp?
-      remote = Durian::Resolver.get_udp_socket! host, port, dnsResolver
+      destination = Durian::Resolver.get_udp_socket! host, port, dnsResolver
     end
 
-    remote.try { |_remote| self.remote = _remote }
-    remote.try &.read_timeout = timeout.read
-    remote.try &.write_timeout = timeout.write
+    destination.try { |_destination| self.destination = _destination }
+    destination.try &.read_timeout = timeout.read
+    destination.try &.write_timeout = timeout.write
 
-    remote
+    destination
   end
 
   def all_close
-    client.close rescue nil
-    remote.close rescue nil
+    source.close rescue nil
+    destination.close rescue nil
   end
 
   def heartbeat_proc : Proc(Nil)?
-    is_client_herbal = client.try &.is_a? Herbal::Socket
-    is_remote_herbal = remote.try &.is_a? Herbal::Socket || remote.try &.is_a? Herbal::Client
+    is_source_herbal = source.try &.is_a? Herbal::Socket
+    is_destination_herbal = destination.try &.is_a? Herbal::Socket || destination.try &.is_a? Herbal::Client
 
-    if is_client_herbal || is_remote_herbal
+    if is_source_herbal || is_destination_herbal
       ->do
-        _client = client
+        _source = source
 
-        if _client.is_a? Herbal::Socket
-          client_wrapped = _client.wrapped
-          client_wrapped.ping if client_wrapped.is_a? Herbal::Plugin::WebSocket::Stream
+        if _source.is_a? Herbal::Socket
+          source_wrapped = _source.wrapped
+          source_wrapped.ping if source_wrapped.is_a? Herbal::Plugin::WebSocket::Stream
         end
 
-        _remote = remote
+        _destination = destination
 
-        if _remote.is_a?(Herbal::Socket) || _remote.is_a?(Herbal::Client)
-          remote_wrapped = _remote.wrapped
-          remote_wrapped.ping if remote_wrapped.is_a? Herbal::Plugin::WebSocket::Stream
+        if _destination.is_a?(Herbal::Socket) || _destination.is_a?(Herbal::Client)
+          destination_wrapped = _destination.wrapped
+          destination_wrapped.ping if destination_wrapped.is_a? Herbal::Plugin::WebSocket::Stream
         end
 
         nil
@@ -82,7 +82,7 @@ class Herbal::Context
   end
 
   def transport(reliable : Transport::Reliable)
-    _transport = Transport.new client, remote, heartbeat: heartbeat_proc
+    _transport = Transport.new source, destination, heartbeat: heartbeat_proc
     _transport.reliable = reliable
     _transport.perform
 
@@ -91,23 +91,23 @@ class Herbal::Context
 
   private def waiting_transport(transport : Transport)
     keep_alive_proc = ->do
-      client_wrapped = client.wrapped
-      return false unless client_wrapped.is_a? Herbal::Plugin::WebSocket::Stream
-      return false unless need_disconnect_peer = client_wrapped.need_disconnect_peer?
+      source_wrapped = source.wrapped
+      return false unless source_wrapped.is_a? Herbal::Plugin::WebSocket::Stream
+      return false unless need_disconnect_peer = source_wrapped.need_disconnect_peer?
 
-      case client_wrapped.keep_alive?
+      case source_wrapped.keep_alive?
       when true
-        transport.cleanup_side Transport::Side::Remote, free_tls: true
+        transport.cleanup_side Transport::Side::Destination, free_tls: true
 
-        client.active = false
-        client_wrapped.need_disconnect_peer = nil
+        source.active = false
+        source_wrapped.need_disconnect_peer = nil
 
         return true
       when false
         transport.cleanup_all
 
-        client.active = false
-        client_wrapped.need_disconnect_peer = nil
+        source.active = false
+        source_wrapped.need_disconnect_peer = nil
 
         return true
       end
@@ -118,7 +118,7 @@ class Herbal::Context
 
       if transport.reliable_status.call
         transport.cleanup_all
-        client.active = false
+        source.active = false
 
         break
       end
@@ -129,7 +129,7 @@ class Herbal::Context
 
   def perform(reliable : Transport::Reliable = Transport::Reliable::Half)
     begin
-      connect_remote!
+      connect_destination!
     rescue ex
       return all_close
     end
@@ -137,24 +137,24 @@ class Herbal::Context
     transport reliable
   end
 
-  def client_establish
-    client_establish rescue nil
+  def source_establish
+    source_establish rescue nil
   end
 
   def reject_establish
     reject_establish rescue nil
-    client.close
+    source.close
   end
 
-  def client_establish!
-    client.establish
-    self.clientEstablish = true
+  def source_establish!
+    source.establish
+    self.sourceEstablish = true
   end
 
   private def reject_establish!
-    return if clientEstablish
+    return if sourceEstablish
 
-    client.reject_establish!
+    source.reject_establish!
   end
 
   def reject_establish

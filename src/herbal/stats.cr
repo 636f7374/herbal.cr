@@ -18,12 +18,12 @@ struct Herbal::Stats
     @addressType = value
   end
 
-  def target_remote_ip_address=(value : ::Socket::IPAddress?)
-    @targetRemoteIpAddress = value
+  def destination_ip_address=(value : ::Socket::IPAddress?)
+    @destinationIpAddress = value
   end
 
-  def target_remote_address=(value : RemoteAddress?)
-    @targetRemoteAddress = value
+  def destination_address=(value : DestinationAddress?)
+    @destinationAddress = value
   end
 
   def self.from_socket(socket : Socket)
@@ -33,8 +33,8 @@ struct Herbal::Stats
     stats.authentication_methods = socket.authentication_methods
     stats.command = socket.command
     stats.address_type = socket.address_type
-    stats.target_remote_ip_address = socket.target_remote_ip_address
-    stats.target_remote_address = socket.target_remote_address
+    stats.destination_ip_address = socket.destination_ip_address
+    stats.destination_address = socket.destination_address
 
     stats
   end

@@ -64,20 +64,20 @@ class Herbal::Socket < IO
     @addressType
   end
 
-  def target_remote_ip_address=(value : ::Socket::IPAddress)
-    @targetRemoteIpAddress = value
+  def destination_ip_address=(value : ::Socket::IPAddress)
+    @destinationIpAddress = value
   end
 
-  def target_remote_ip_address
-    @targetRemoteIpAddress
+  def destination_ip_address
+    @destinationIpAddress
   end
 
-  def target_remote_address=(value : RemoteAddress)
-    @targetRemoteAddress = value
+  def destination_address=(value : DestinationAddress)
+    @destinationAddress = value
   end
 
-  def target_remote_address
-    @targetRemoteAddress
+  def destination_address
+    @destinationAddress
   end
 
   def stats
@@ -99,15 +99,15 @@ class Herbal::Socket < IO
   end
 
   def loopback_unspecified? : Bool
-    return false unless _target_remote_ip_address = target_remote_ip_address
-    return true if _target_remote_ip_address.loopback? || _target_remote_ip_address.unspecified?
+    return false unless _destination_ip_address = destination_ip_address
+    return true if _destination_ip_address.loopback? || _destination_ip_address.unspecified?
 
     false
   end
 
-  def bad_remote_address?
-    return false unless _target_remote_address = target_remote_address
-    return true if _target_remote_address.port.zero?
+  def bad_destination_address?
+    return false unless _destination_address = destination_address
+    return true if _destination_address.port.zero?
 
     false
   end
@@ -284,8 +284,8 @@ class Herbal::Socket < IO
         raise MalformedPacket.new
       end
 
-      self.target_remote_address = RemoteAddress.new ip_address.address, ip_address.port
-      self.target_remote_ip_address = ip_address
+      self.destination_address = DestinationAddress.new ip_address.address, ip_address.port
+      self.destination_ip_address = ip_address
     when .ipv4?
       ip_address = Herbal.extract_ip_address! address, self
 
@@ -294,27 +294,27 @@ class Herbal::Socket < IO
         raise MalformedPacket.new
       end
 
-      self.target_remote_address = RemoteAddress.new ip_address.address, ip_address.port
-      self.target_remote_ip_address = ip_address
+      self.destination_address = DestinationAddress.new ip_address.address, ip_address.port
+      self.destination_ip_address = ip_address
     when .domain?
-      target_remote_address = Herbal.extract_domain! self
+      destination_address = Herbal.extract_domain! self
 
-      unless target_remote_address
+      unless destination_address
         set_disconnect! version
         raise MalformedPacket.new
       end
 
-      self.target_remote_address = target_remote_address
+      self.destination_address = destination_address
       return unless sync_resolution
 
       begin
-        method, target_ip_address = Durian::Resolver.getaddrinfo! target_remote_address.host, target_remote_address.port, dnsResolver
+        method, ip_address = Durian::Resolver.getaddrinfo! destination_address.host, destination_address.port, dnsResolver
       rescue ex
         set_disconnect! version
         raise ex
       end
 
-      self.target_remote_ip_address = target_ip_address
+      self.destination_ip_address = ip_address
     end
   end
 
@@ -322,9 +322,9 @@ class Herbal::Socket < IO
     raise UnknownFlag.new unless _version = version
     raise UnknownFlag.new unless _address_type = address_type
 
-    target_ip_address = target_remote_ip_address
-    target_ip_address = Herbal.unspecified_ip_address if _address_type.domain? unless sync_resolution
-    raise UnknownFlag.new unless target_ip_address
+    _destination_ip_address = destination_ip_address
+    _destination_ip_address = Herbal.unspecified_ip_address if _address_type.domain? unless sync_resolution
+    raise UnknownFlag.new unless _destination_ip_address
 
     memory = IO::Memory.new
     memory.write Bytes[_version.to_i]
@@ -334,23 +334,23 @@ class Herbal::Socket < IO
     case _address_type
     when .ipv4?
       memory.write Bytes[_address_type.to_i]
-      memory.write Herbal.ipv4_address_to_bytes target_ip_address
-      memory.write_bytes target_ip_address.port.to_u16, IO::ByteFormat::BigEndian
+      memory.write Herbal.ipv4_address_to_bytes _destination_ip_address
+      memory.write_bytes _destination_ip_address.port.to_u16, IO::ByteFormat::BigEndian
     when .ipv6?
-      unless ipv6_address = ::Socket::IPAddress.ipv6_to_bytes target_ip_address
+      unless ipv6_address = ::Socket::IPAddress.ipv6_to_bytes _destination_ip_address
         raise MalformedPacket.new "Invalid Ipv6 Address"
       end
 
       memory.write Bytes[_address_type.to_i]
       memory.write ipv6_address
-      memory.write_bytes target_ip_address.port.to_u16, IO::ByteFormat::BigEndian
+      memory.write_bytes _destination_ip_address.port.to_u16, IO::ByteFormat::BigEndian
     when .domain?
-      case target_ip_address.family
+      case _destination_ip_address.family
       when .inet?
         memory.write Bytes[Herbal::Address::Ipv4.to_i]
-        memory.write Herbal.ipv4_address_to_bytes target_ip_address
+        memory.write Herbal.ipv4_address_to_bytes _destination_ip_address
       when .inet6?
-        unless ipv6_address = ::Socket::IPAddress.ipv6_to_bytes target_ip_address
+        unless ipv6_address = ::Socket::IPAddress.ipv6_to_bytes _destination_ip_address
           raise MalformedPacket.new "Invalid Ipv6 Address"
         end
 
@@ -358,7 +358,7 @@ class Herbal::Socket < IO
         memory.write ipv6_address
       end
 
-      memory.write_bytes target_ip_address.port.to_u16, IO::ByteFormat::BigEndian
+      memory.write_bytes _destination_ip_address.port.to_u16, IO::ByteFormat::BigEndian
     end
 
     write memory.to_slice

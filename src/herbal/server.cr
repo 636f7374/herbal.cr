@@ -66,7 +66,7 @@ class Herbal::Server
 
     begin
       socket.process! sync_resolution
-      raise BadRemoteAddress.new if socket.bad_remote_address?
+      raise BadDestinationAddress.new if socket.bad_destination_address?
     rescue ex
       socket.close
 
@@ -96,7 +96,7 @@ class Herbal::Server
     process! socket, sync_resolution, skip_establish
 
     context = Context.new socket, dnsResolver
-    context.clientEstablish = true unless skip_establish
+    context.sourceEstablish = true unless skip_establish
 
     remote_timeout.try { |_timeout| context.timeout = _timeout }
 

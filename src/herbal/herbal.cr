@@ -64,7 +64,7 @@ module Herbal
   class ConnectionDenied < Exception
   end
 
-  class BadRemoteAddress < Exception
+  class BadDestinationAddress < Exception
   end
 
   class AuthenticationEntry
@@ -84,7 +84,7 @@ module Herbal
     end
   end
 
-  class RemoteAddress
+  class DestinationAddress
     property host : String
     property port : Int32
 
@@ -136,7 +136,7 @@ module Herbal
     buffer.to_slice
   end
 
-  def self.extract_domain!(io : IO) : RemoteAddress?
+  def self.extract_domain!(io : IO) : DestinationAddress?
     buffer = uninitialized UInt8[1_i32]
     length = io.read buffer.to_slice
 
@@ -154,7 +154,7 @@ module Herbal
     port = io.read_bytes UInt16, IO::ByteFormat::BigEndian
     return unless _port = port
 
-    RemoteAddress.new domain, port.to_i32
+    DestinationAddress.new domain, port.to_i32
   end
 
   def self.extract_ip_address!(address_type : Address, io : IO) : ::Socket::IPAddress?
