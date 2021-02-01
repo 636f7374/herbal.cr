@@ -144,7 +144,7 @@ end
 ```
 
 ```crystal
-STDOUT.puts context.stats # => Herbal::Stats(@version=V5, @authenticationMethods=[NoAuthentication], @command=TCPConnection, @addressType=Domain, @remoteIpAddress=nil, @remoteAddress=#<Herbal::RemoteAddress:0x13f0a9340 @address="api.github.com", @port=443>)
+STDOUT.puts context.stats # => Herbal::Stats(@version=V5, @authenticationMethods=[NoAuthentication], @command=TCPConnection, @addressType=Domain, @destinationIpAddress=nil, @destinationAddress=#<Herbal::DestinationAddress:0x13f0a9340 @host="api.github.com", @port=443>)
 ```
 
 ### Used as Shard
@@ -190,4 +190,4 @@ $ make test
 
 ## License
 
-* GPLv3 License
+* BSD 3-Clause Clear License
