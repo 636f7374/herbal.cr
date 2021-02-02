@@ -2,17 +2,17 @@ require "../../src/herbal.cr"
 
 # Durian
 
-servers = [] of Durian::Resolver::Server
-servers << Durian::Resolver::Server.new ipAddress: Socket::IPAddress.new("8.8.8.8", 53_i32), protocol: Durian::Protocol::UDP
-servers << Durian::Resolver::Server.new ipAddress: Socket::IPAddress.new("1.1.1.1", 53_i32), protocol: Durian::Protocol::UDP
+dns_servers = [] of Durian::Resolver::Server
+dns_servers << Durian::Resolver::Server.new ipAddress: Socket::IPAddress.new("8.8.8.8", 53_i32), protocol: Durian::Protocol::UDP
+dns_servers << Durian::Resolver::Server.new ipAddress: Socket::IPAddress.new("1.1.1.1", 53_i32), protocol: Durian::Protocol::UDP
 
-resolver = Durian::Resolver.new servers
-resolver.ip_cache = Durian::Cache::IPAddress.new
+dns_resolver = Durian::Resolver.new dns_servers
+dns_resolver.ip_cache = Durian::Cache::IPAddress.new
 
 # Herbal
 
 begin
-  client = Herbal::Client.new "0.0.0.0", 1234_i32, resolver
+  client = Herbal::Client.new "0.0.0.0", 1234_i32, dns_resolver
 
   protocol = HTTP::WebSocket.handshake client.wrapped, "0.0.0.0", 1234_i32
   stream = Herbal::Plugin::WebSocket::Stream.new protocol
@@ -22,7 +22,7 @@ begin
   # client.authentication_methods = [Herbal::Authentication::NoAuthentication, Herbal::Authentication::UserNamePassword]
   # client.on_auth = Herbal::AuthenticationEntry.new "admin", "abc123"
 
-  client.connect! "www.example.com", 80_i32, Herbal::Command::TCPConnection, true
+  client.connect! "www.example.com", 80_i32, Herbal::Command::TCPConnection, remote_resolution: true
 
   # Write Payload
 

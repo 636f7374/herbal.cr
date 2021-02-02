@@ -18,22 +18,25 @@ begin
   # client.authentication_methods = [Herbal::Authentication::NoAuthentication, Herbal::Authentication::UserNamePassword]
   # client.on_auth = Herbal::AuthenticationEntry.new "admin", "abc123"
 
-  client.connect! "www.example.com", 80_i32, Herbal::Command::TCPConnection, remote_resolution: true
+  client.connect! "8.8.8.8", 53_i32, Herbal::Command::AssociateUDP, remote_resolution: true
 
   # Write Payload
 
-  memory = IO::Memory.new
-  request = HTTP::Request.new "GET", "http://www.example.com"
-  request.to_io memory
-  client.write memory.to_slice
+  request = Durian::Packet.new Durian::Protocol::UDP, Durian::Packet::QRFlag::Query
+  request.add_query "www.example.com", Durian::RecordFlag::A
+  client.write request.to_slice
 
   # _Read Payload
 
-  buffer = uninitialized UInt8[4096_i32]
-  length = client.read buffer.to_slice
+  STDOUT.puts [Durian::Packet.from_io Durian::Protocol::UDP, client]
 
-  STDOUT.puts [:length, length]
-  STDOUT.puts String.new buffer.to_slice[0_i32, length]
+  request = Durian::Packet.new Durian::Protocol::UDP, Durian::Packet::QRFlag::Query
+  request.add_query "www.google.com", Durian::RecordFlag::A
+  client.write request.to_slice
+
+  # _Read Payload
+
+  STDOUT.puts [Durian::Packet.from_io Durian::Protocol::UDP, client]
 rescue ex
   STDOUT.puts [ex]
 end

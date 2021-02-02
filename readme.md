@@ -57,23 +57,23 @@ require "herbal"
 
 # Durian
 
-servers = [] of Durian::Resolver::Server
-servers << Durian::Resolver::Server.new ipAddress: Socket::IPAddress.new("8.8.8.8", 53_i32), protocol: Durian::Protocol::UDP
-servers << Durian::Resolver::Server.new ipAddress: Socket::IPAddress.new("1.1.1.1", 53_i32), protocol: Durian::Protocol::UDP
+dns_servers = [] of Durian::Resolver::Server
+dns_servers << Durian::Resolver::Server.new ipAddress: Socket::IPAddress.new("8.8.8.8", 53_i32), protocol: Durian::Protocol::UDP
+dns_servers << Durian::Resolver::Server.new ipAddress: Socket::IPAddress.new("1.1.1.1", 53_i32), protocol: Durian::Protocol::UDP
 
-resolver = Durian::Resolver.new servers
+dns_resolver = Durian::Resolver.new dns_servers
 resolver.ip_cache = Durian::Cache::IPAddress.new
 
 # Herbal
 
 begin
-  client = Herbal::Client.new "0.0.0.0", 1234_i32, resolver
+  client = Herbal::Client.new "0.0.0.0", 1234_i32, dns_resolver
 
   # Authentication (Optional)
   # client.authentication_methods = [Herbal::Authentication::NoAuthentication, Herbal::Authentication::UserNamePassword]
   # client.on_auth = Herbal::AuthenticationEntry.new "admin", "abc123"
 
-  client.connect! "www.example.com", 80_i32, Herbal::Command::TCPConnection, true
+  client.connect! "www.example.com", 80_i32, Herbal::Command::TCPConnection, remote_resolution: true
 
   # Write Payload
 
@@ -102,24 +102,24 @@ client.try &.close
 require "herbal"
 
 def handle_client(context : Herbal::Context)
-  STDOUT.puts context.stats
+  STDOUT.puts [context.stats]
 
   context.perform
 end
 
 # Durian
 
-servers = [] of Durian::Resolver::Server
-servers << Durian::Resolver::Server.new ipAddress: Socket::IPAddress.new("8.8.8.8", 53_i32), protocol: Durian::Protocol::UDP
-servers << Durian::Resolver::Server.new ipAddress: Socket::IPAddress.new("1.1.1.1", 53_i32), protocol: Durian::Protocol::UDP
+dns_servers = [] of Durian::Resolver::Server
+dns_servers << Durian::Resolver::Server.new ipAddress: Socket::IPAddress.new("8.8.8.8", 53_i32), protocol: Durian::Protocol::UDP
+dns_servers << Durian::Resolver::Server.new ipAddress: Socket::IPAddress.new("1.1.1.1", 53_i32), protocol: Durian::Protocol::UDP
 
-resolver = Durian::Resolver.new servers
-resolver.ip_cache = Durian::Cache::IPAddress.new
+dns_resolver = Durian::Resolver.new dns_servers
+dns_resolver.ip_cache = Durian::Cache::IPAddress.new
 
 # Herbal
 
 tcp_server = TCPServer.new "0.0.0.0", 1234_i32
-herbal = Herbal::Server.new tcp_server, resolver
+herbal = Herbal::Server.new tcp_server, dns_resolver
 herbal.authentication = Herbal::Authentication::NoAuthentication
 herbal.client_timeout = Herbal::TimeOut.new
 herbal.remote_timeout = Herbal::TimeOut.new

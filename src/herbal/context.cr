@@ -22,8 +22,9 @@ class Herbal::Context
     Stats.from_socket source
   end
 
-  def connect_destination!
-    return unless destination.is_a? IO::Memory if destination
+  def connect_destination! : IO
+    _destination = destination
+    return _destination unless destination.is_a? IO::Memory if destination
 
     raise UnknownFlag.new unless command = source.command
     raise UnEstablish.new unless sourceEstablish
@@ -34,21 +35,25 @@ class Herbal::Context
 
     case command
     when .tcp_connection?
-      destination = Durian::TCPSocket.connect host, port, dnsResolver, timeout.connect
+      socket = Durian::TCPSocket.connect host, port, dnsResolver, timeout.connect
     when .tcp_binding?
-      destination = Durian::TCPSocket.connect host, port, dnsResolver, timeout.connect
-      destination.reuse_address = true
-      destination.reuse_port = true
-      destination.bind destination.local_address
+      socket = Durian::TCPSocket.connect host, port, dnsResolver, timeout.connect
+      socket.reuse_address = true
+      socket.reuse_port = true
+      socket.bind socket.local_address rescue nil
     when .associate_udp?
-      destination = Durian::Resolver.get_udp_socket! host, port, dnsResolver
+      socket = Durian::Resolver.get_udp_socket! host, port, dnsResolver
     end
 
-    destination.try { |_destination| self.destination = _destination }
-    destination.try &.read_timeout = timeout.read
-    destination.try &.write_timeout = timeout.write
+    socket.try do |_socket|
+      _socket.read_timeout = timeout.read
+      _socket.write_timeout = timeout.write
+      self.destination = _socket
 
-    destination
+      return _socket
+    end
+
+    raise Exception.new "Unable to connect to Destination"
   end
 
   def all_close
@@ -123,7 +128,7 @@ class Herbal::Context
         break
       end
 
-      next sleep 0.25_f32
+      next sleep 0.25_f32.seconds
     end
   end
 
@@ -131,7 +136,9 @@ class Herbal::Context
     begin
       connect_destination!
     rescue ex
-      return all_close
+      all_close
+
+      return
     end
 
     transport reliable

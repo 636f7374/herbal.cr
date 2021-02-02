@@ -43,13 +43,13 @@ end
 
 # Durian
 
-dns_server_list = [] of Durian::Resolver::Server
-dns_server_list << Durian::Resolver::Server.new Socket::IPAddress.new("1.1.1.1", 53_i32), Durian::Protocol::UDP
-dns_server_list << Durian::Resolver::Server.new Socket::IPAddress.new("1.0.0.1", 53_i32), Durian::Protocol::UDP
-dns_server_list << Durian::Resolver::Server.new Socket::IPAddress.new("8.8.8.8", 53_i32), Durian::Protocol::UDP
-dns_server_list << Durian::Resolver::Server.new Socket::IPAddress.new("8.8.4.4", 53_i32), Durian::Protocol::UDP
+dns_servers = [] of Durian::Resolver::Server
+dns_servers << Durian::Resolver::Server.new Socket::IPAddress.new("1.1.1.1", 53_i32), Durian::Protocol::UDP
+dns_servers << Durian::Resolver::Server.new Socket::IPAddress.new("1.0.0.1", 53_i32), Durian::Protocol::UDP
+dns_servers << Durian::Resolver::Server.new Socket::IPAddress.new("8.8.8.8", 53_i32), Durian::Protocol::UDP
+dns_servers << Durian::Resolver::Server.new Socket::IPAddress.new("8.8.4.4", 53_i32), Durian::Protocol::UDP
 
-dns_resolver = Durian::Resolver.new dns_server_list
+dns_resolver = Durian::Resolver.new dns_servers
 dns_resolver.ip_cache = Durian::Cache::IPAddress.new
 
 # Herbal
